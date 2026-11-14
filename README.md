@@ -1,84 +1,166 @@
+<div align="center">
+
 # Extracción de cuestionarios
 
-Servicio que recibe un cuestionario o prueba de evaluación (PDF, DOCX o XLSX) e identifica sus ítems, su tipo (escala Likert, selección múltiple, verdadero/falso, desarrollo, emparejamiento), sus alternativas y, si el documento la indica, la respuesta correcta. Devuelve un JSON estructurado.
+**Sube un cuestionario o una prueba en PDF, Word o Excel y recibe todas sus preguntas como JSON estructurado.**
 
-## Estructura
+Identifica cada ítem, su tipo, sus alternativas y, si el documento la marca, la respuesta correcta. Copia el contenido literal y no inventa nada.
+
+![Python 3.13](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
+![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)
+![Docker Compose](https://img.shields.io/badge/Docker_Compose-2496ED?logo=docker&logoColor=white)
+<br />
+![Gemini](https://img.shields.io/badge/Gemini-8E75B2?logo=googlegemini&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-412991)
+![DeepSeek](https://img.shields.io/badge/DeepSeek-4D6BFE?logo=deepseek&logoColor=white)
+![vía LiteLLM](https://img.shields.io/badge/v%C3%ADa-LiteLLM-1F2937)
+
+[Inicio rápido](#inicio-rápido) · [Guías](#guías) · [Cómo funciona](guia/funcionamiento.md) · [API](guia/uso.md#integración-por-api) · [Supuestos](#supuestos)
+
+</div>
+
+---
+
+## Qué hace
+
+```mermaid
+flowchart LR
+    A["Cuestionario<br/>PDF · DOCX · XLSX"] --> B["Lectura<br/>texto, formato e<br/>imagen de cada página"]
+    B --> C["Modelo de lenguaje<br/>elegido por el cliente"]
+    C --> D["Verificación<br/>contra el documento"]
+    D --> E["JSON<br/>ítems, tipos, alternativas<br/>y respuesta correcta"]
+```
+
+Tiene dos páginas web y una API:
+
+| | Para quién | Qué se hace ahí |
+|---|---|---|
+| **Página de los clientes** (`/`) | Los clientes invitados (por ejemplo, un colegio) | Subir el archivo, elegir el modelo y ver las preguntas, o descargar el JSON |
+| **Panel de administración** (`/admin`) | El equipo que opera el servicio | Crear clientes, enviarles su enlace de invitación y fijar sus límites de uso |
+| **API REST** (`/api/v1`) | Sistemas que se integran | Lo mismo que la página de los clientes, con una API key |
+
+### Tipos de ítem que reconoce
+
+| Tipo (`tipo`) | Ejemplo | Respuesta correcta |
+|---|---|---|
+| `escala_likert` | "Me preocupo demasiado" → Nunca · A veces · Siempre | No tiene |
+| `seleccion_multiple` | "¿Qué número sigue? 2, 4, 8…" → A) 12 · B) 16 | `["B"]`, o varias: `["A", "D"]` |
+| `verdadero_falso` | "El agua hierve a 100 °C" → V / F | `["V"]` |
+| `emparejamiento` | Unir la columna 1–3 con la columna a–c | Pares: `["1-c", "2-a", "3-b"]` |
+| `desarrollo` | "Describe una situación en que…" | No tiene |
+
+La respuesta correcta solo se completa cuando el documento la indica: negrita, subrayado, resaltado, casilla marcada o una clave de respuestas. Si no hay evidencia, queda en `null`.
+
+<details>
+<summary><b>Ver un ejemplo de respuesta</b></summary>
+
+```json
+{
+  "titulo": "Questionario di esempio",
+  "idioma": "it",
+  "total_items": 3,
+  "items": [
+    {
+      "numero": 1,
+      "enunciado": "Mi preoccupo eccessivamente per cose di poca importanza.",
+      "tipo": "escala_likert",
+      "alternativas": [
+        { "valor": 0, "texto": "Mai" },
+        { "valor": 1, "texto": "A volte" },
+        { "valor": 2, "texto": "Spesso" },
+        { "valor": 3, "texto": "Sempre" }
+      ],
+      "premisas": [],
+      "respuesta_correcta": null
+    },
+    {
+      "numero": 2,
+      "enunciado": "Quale numero completa la serie: 2, 4, 8, 16, ...?",
+      "tipo": "seleccion_multiple",
+      "alternativas": [
+        { "valor": "A", "texto": "18" },
+        { "valor": "B", "texto": "24" },
+        { "valor": "C", "texto": "32" }
+      ],
+      "premisas": [],
+      "respuesta_correcta": ["C"]
+    },
+    {
+      "numero": 3,
+      "enunciado": "Descriva una situazione recente in cui si è sentito sotto pressione.",
+      "tipo": "desarrollo",
+      "alternativas": [],
+      "premisas": [],
+      "respuesta_correcta": null
+    }
+  ]
+}
+```
+
+</details>
+
+### Lo más destacado
+
+- **Documentos largos:** los divide en partes de 8 páginas, las procesa en paralelo y las une sin duplicar preguntas.
+- **Páginas escaneadas:** el modelo lee la imagen de la página cuando no hay texto.
+- **Claves de respuestas al final:** si la clave ocupa varias páginas o es una imagen, hace una lectura extra solo para completar las respuestas que faltan.
+- **Anti-invención:** comprueba que cada pregunta y alternativa aparezca en el documento y avisa de lo que no pudo verificar.
+- **Tres modelos comparables:** Gemini, OpenAI y DeepSeek. El cliente elige uno y puede repetir con otro sin volver a subir el archivo.
+- **Acceso por invitación:** el cliente entra con un enlace, sin contraseñas. Cada cliente tiene límites de uso diarios y por minuto.
+
+## Inicio rápido
+
+Necesitas **Docker** (con Compose) y una **API key de Gemini**. Si no tienes alguno de los dos, o es la primera vez que levantas el proyecto, sigue la [guía de instalación](guia/instalacion.md), que explica cada paso.
+
+```bash
+git clone <url-del-repositorio> giunti && cd giunti
+cp backend/.env.example backend/.env
+docker run --rm python:3.13-slim python -c "import secrets; print(secrets.token_urlsafe(48))"
+# Edita backend/.env: API_KEY_PEPPER=<lo que imprimió el comando anterior> y GEMINI_API_KEY=<tu key>
+docker compose up -d --build
+docker compose exec backend python -m app.auth.create_key --name "Administración" --admin
+```
+
+El último comando imprime un enlace `http://localhost:8000/admin#clave=gk_…`. Ábrelo, crea tu primer cliente y prueba con un cuestionario.
+
+## Guías
+
+| Guía | Cuándo leerla |
+|---|---|
+| [Instalación](guia/instalacion.md) | Primera vez: levantar el servicio en tu computador, paso a paso y desde cero |
+| [Despliegue en un servidor](guia/despliegue.md) | Publicarlo en un dominio con HTTPS, respaldos y actualizaciones |
+| [Uso](guia/uso.md) | Panel de administración, página de los clientes e integración por API |
+| [Cómo funciona](guia/funcionamiento.md) | Arquitectura, flujos y diagramas: qué pasa desde que se sube el archivo |
+| [Desarrollo](guia/desarrollo.md) | Modificar el código: devcontainer, comandos, estructura y controles de calidad |
+| [Problemas frecuentes](guia/problemas.md) | Algo no funciona |
+
+Cada proyecto tiene además su propio README: [backend](backend/README.md) y [evaluación](eval/README.md).
+
+## Estructura del repositorio
 
 ```
 giunti/
-├── backend/              API FastAPI (Python 3.13, uv)
-├── frontend/             React + Vite + TypeScript (sitio estático)
-├── eval/                 Tests sintéticos, datasets y evaluación de calidad
-├── scripts/              Herramientas del repositorio (chequeo de dependencias deprecadas)
-├── .devcontainer/        Entorno de desarrollo (mismas versiones que producción)
-├── justfile              Comandos de todo el repositorio (carga los justfile de cada proyecto)
-├── docker-compose.yml    Despliegue "todo junto" (backend + frontend con nginx)
-└── .github/workflows/    CI: controles de calidad y auditoría de dependencias
+├── backend/              API en FastAPI: lectura de documentos, modelos, accesos (Python 3.13, uv)
+├── frontend/             Página de los clientes y panel de administración (React + Vite + TypeScript)
+├── eval/                 Cuestionarios sintéticos y medición de la calidad de la extracción
+├── guia/                 Guías de instalación, despliegue, uso y funcionamiento
+├── scripts/              Herramientas del repositorio (dependencias deprecadas)
+├── .devcontainer/        Entorno de desarrollo, con las mismas versiones que producción
+├── .github/workflows/    CI: controles de calidad y auditoría semanal de dependencias
+├── docker-compose.yml    Backend + frontend (nginx) en un solo servidor
+└── justfile              Comandos de todo el repositorio
 ```
-
-## Entorno de trabajo
-
-Abrir el repositorio en el **devcontainer** (VS Code: "Dev Containers: Reopen in Container"). Incluye Python 3.13, uv, Node 22, LibreOffice, `just` y `pre-commit`, e instala todo con `just setup` al crearse.
-
-```bash
-cp backend/.env.example backend/.env   # completar
-just                                   # lista de comandos (cada proyecto tiene además su propio justfile)
-just backend::dev                      # API → http://localhost:8080 (docs en /docs)
-just frontend::dev                     # Frontend → http://localhost:5173
-just check                             # formato, lint, imports, tipos, tests y build de todo
-just backend::check                    # solo un proyecto (o: cd backend && just check)
-just up                                # todo junto con docker compose → http://localhost:8000
-```
-
-## API
-
-| Endpoint | Qué hace |
-|---|---|
-| `GET /api/v1/models` | Modelos disponibles agrupados por proveedor, con su descripción y el modelo por defecto. Solo aparecen los modelos cuyo proveedor tiene API key configurada. |
-| `POST /api/v1/questionnaires` | Recibe un archivo (`file`, multipart) y opcionalmente el modelo (`model`, un `id` de `GET /models`). Devuelve el JSON del cuestionario. Consume una unidad de la cuota diaria del cliente. |
-| `/api/v1/admin/clients` | Panel de administración: listar, crear (`POST`), editar (`PATCH /{id}`: nombre, límites, activar/desactivar) y reemplazar la clave (`POST /{id}/key`). Solo con clave de administrador. |
-| `GET /health` | Estado del servicio (sin autenticación). |
-
-Los endpoints de `/api/v1` exigen una API key en el header `X-API-Key`:
-
-```bash
-curl -H "X-API-Key: gk_colegio_..." -F file=@cuestionario.pdf -F model=gemini-flash \
-  http://localhost:8080/api/v1/questionnaires
-```
-
-La respuesta del `POST` incluye headers con datos de la ejecución: `X-LLM-Model`, `X-LLM-Input-Tokens`, `X-LLM-Output-Tokens`, `X-LLM-Repairs`, `X-LLM-Duration-Ms`, `X-Extraction-Parts` (en cuántas partes se procesó un documento largo), `X-Extraction-Warnings` (lista JSON de advertencias: contenido que no se pudo verificar contra el documento, páginas escaneadas, etc.) y `X-RateLimit-Remaining-Day`. Los errores siguen el formato `{"error": {"code", "message", "request_id"}}`; al superar un límite se responde `429 RATE_LIMITED` con `Retry-After`.
-
-Los modelos se configuran en [backend/llm_catalog.toml](backend/llm_catalog.toml) y las API keys de los proveedores de LLM en `backend/.env` (`GEMINI_API_KEY`, `LLM_API_KEYS`).
-
-## Frontend
-
-Una sola página en tres pasos: clave de acceso (se recuerda en el navegador), archivo y modelo. Mientras espera muestra una animación, el tiempo transcurrido y un botón para cancelar; el resultado se ve como tarjetas por pregunta o como JSON (copiar y descargar), y se puede repetir con otro modelo sin volver a subir el archivo.
-
-```bash
-just backend::dev      # API en :8080
-just frontend::dev     # http://localhost:5173 (redirige /api al backend)
-just frontend::check   # formato, lint (incluida accesibilidad), tipos, tests, build y tamaño del bundle
-```
-
-Variables (`frontend/.env.example`): `VITE_API_URL` (vacía = mismo origen) y `VITE_MAX_FILE_MB` (igual a `MAX_FILE_SIZE_MB` del backend). Si el frontend se publica en otro dominio, agregarlo a `CORS_ORIGINS` del backend.
-
-## Accesos: administradores y clientes
-
-Los clientes nunca generan ni escriben claves: reciben un **enlace de invitación** (`https://…/#clave=gk_…`) y con un clic quedan dentro. La clave viaja después del `#`, que el navegador no envía al servidor, y se borra de la barra de direcciones al leerla.
-
-1. **Una sola vez, al instalar:** generar `API_KEY_PEPPER` en `backend/.env` (`python3 -c "import secrets; print(secrets.token_urlsafe(48))"`) y crear el primer administrador:
-   ```bash
-   just backend::create-admin            # imprime el enlace al panel: http://…/admin#clave=…
-   ```
-2. **Desde entonces, todo en el panel `/admin`:** crear un cliente (nombre y límites) entrega su enlace de invitación para enviarlo por correo o mensaje. Ahí también se desactiva un cliente, se cambian sus límites o se genera una invitación nueva (la anterior deja de funcionar).
-
-Las claves se guardan en una base de datos (solo su hash HMAC): un archivo SQLite en `backend/data/` por defecto, un volumen en docker-compose, o un Postgres vía `DATABASE_URL`. `PUBLIC_APP_URL` es la dirección del frontend que va en los enlaces. Los administradores solo se crean con el comando, nunca desde la web.
 
 ## Supuestos
 
 Cuando el enunciado admite más de una interpretación, se elige la más razonable, se registra aquí y se avanza. Cada supuesto indica qué era ambiguo, qué se asumió y por qué.
 
-### Entrada
+<details>
+<summary><b>Entrada</b> (S1–S5, S20)</summary>
 
 | # | Ambigüedad | Supuesto | Por qué |
 |---|---|---|---|
@@ -89,7 +171,10 @@ Cuando el enunciado admite más de una interpretación, se elige la más razonab
 | S5 | ¿Qué imágenes se procesan? | Solo las de **PDF y Word**, y solo para leer el texto de preguntas que vienen como imagen o para ubicar las figuras de una pregunta. Las de Excel se ignoran. | Indicación del equipo. |
 | S20 | ¿Qué hacer con las hojas ocultas de un Excel? | Se **incluyen**, marcadas como ocultas. Las hojas vacías se omiten. | A veces la clave de respuestas está en una hoja oculta; marcarla deja al modelo decidir con esa información. |
 
-### Salida
+</details>
+
+<details>
+<summary><b>Salida</b> (S6–S17, S22)</summary>
 
 | # | Ambigüedad | Supuesto | Por qué |
 |---|---|---|---|
@@ -107,10 +192,16 @@ Cuando el enunciado admite más de una interpretación, se elige la más razonab
 | S17 | Textos con errores de extracción (palabras cortadas por guion al final de línea) | Se reconstruyen las palabras cortadas, pero el contenido se copia **literal**: sin traducir, corregir ni resumir. | Fidelidad al documento original. |
 | S22 | ¿Qué hacer si la clave de respuestas ocupa varias páginas, está solo como imagen o lejos de las preguntas? | Se busca y se usa igual: los ítems de selección, verdadero/falso o emparejamiento que quedan sin respuesta se completan con **una lectura extra de las páginas de la clave**. Si la clave no da la respuesta de un ítem o no se puede asociar con seguridad (por ejemplo, dos exámenes que reinician la numeración), queda `null` y se informa en `X-Extraction-Warnings`. Nunca se cambia una respuesta ya encontrada. | La clave al final, en una tabla de varias páginas, es el formato habitual de las pruebas estandarizadas; el usuario no puede adaptar el documento a la API. |
 
-### Errores y acceso
+</details>
+
+<details>
+<summary><b>Errores, acceso y despliegue</b> (S18, S19, S21, S23)</summary>
 
 | # | Ambigüedad | Supuesto | Por qué |
 |---|---|---|---|
 | S18 | ¿Cómo informar los errores? | JSON `{"error": {"code", "message", "request_id"}}` con códigos estables en inglés y el código HTTP correspondiente (por ejemplo, 422 `NO_ITEMS` si no se detectan ítems, 415 `UNSUPPORTED_FORMAT` si el formato no es válido). | El cliente puede reaccionar al código sin interpretar textos, y el `request_id` permite rastrear el caso en los logs. |
 | S19 | El módulo de autenticación no define usuarios. | Acceso con **API key** por cliente, tanto para el frontend como para integraciones por API. | Los clientes de prueba no necesitan registro, roles ni historial. |
 | S21 | ¿Qué modelo se usa si el cliente no elige uno? | El `default_model` del catálogo (Gemini Flash); si su proveedor no tiene API key, el primer modelo habilitado. Nunca hay fallback: si el modelo falla, se devuelve el error. | Las integraciones por API no quedan obligadas a enviar el modelo, y el cliente siempre sabe qué modelo produjo el resultado (header `X-LLM-Model`). |
+| S23 | ¿Cómo se despliega en un servidor y con qué configuración? | **Docker Compose en un solo servidor, siempre en modo producción**, detrás de un proxy inverso con HTTPS que el equipo pone (Caddy recomendado). El puerto de la aplicación puede limitarse a la propia máquina (`APP_BIND_ADDRESS=127.0.0.1`). | La extracción es síncrona y tarda minutos: un solo servidor sin límite de tiempo por petición es lo más simple que funciona. Forzar producción en el compose evita desplegar por descuido con un secreto de ejemplo. El despliegue en la nube queda pendiente. |
+
+</details>

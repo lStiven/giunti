@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ReactElement } from "react";
 import type { ApiRequestError } from "../api/client";
 import { errorGuidance, formatWait, type ErrorAction } from "../messages";
 import { CopyButton } from "./CopyButton";
-import { AlertIcon } from "./icons";
+import { AlertIcon, ChangeFileIcon, KeyIcon, ModelIcon, RetryIcon, WaitIcon } from "./icons";
 
 interface ErrorNoticeProps {
   error: ApiRequestError;
@@ -60,6 +60,14 @@ export function ErrorNotice({
     reenterKey: "Ingresar otra clave",
     contactAdmin: null,
   };
+  const icons: Record<ErrorAction, ReactElement | null> = {
+    retry: <RetryIcon />,
+    wait: secondsLeft > 0 ? <WaitIcon /> : <RetryIcon />,
+    changeModel: <ModelIcon />,
+    changeFile: <ChangeFileIcon />,
+    reenterKey: <KeyIcon />,
+    contactAdmin: null,
+  };
   const handlers: Record<ErrorAction, () => void> = {
     retry: onRetry,
     wait: onRetry,
@@ -110,6 +118,7 @@ export function ErrorNotice({
               onClick={handlers[action]}
               disabled={action === "wait" && secondsLeft > 0}
             >
+              {icons[action]}
               {labels[action]}
             </button>
           ))}

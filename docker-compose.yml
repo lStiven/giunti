@@ -1,17 +1,42 @@
-# Full stack on one host: cp backend/.env.example backend/.env, then `just up`.
-# Frontend on http://localhost:8000, API proxied by nginx under /api.
+# Full stack on one host (see "Puesta en marcha" in README.md).
+# Frontend on http://localhost:${APP_PORT}, API proxied by nginx under /api.
+# Optional settings in a .env file next to this one (git-ignored):
+#   APP_PORT          host port of the web app (default 8000)
+#   APP_BIND_ADDRESS  host interface for that port (default 0.0.0.0); 127.0.0.1 behind a
+#                     reverse proxy on the same server, so plain HTTP is not reachable from outside
+#   PUBLIC_APP_URL    address people use to open the app, used in invitation links
+#                     (default http://localhost:${APP_PORT}; set it to your domain on a server)
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   backend:
     build: ./backend
     env_file: ./backend/.env
     environment:
+      # This stack is the deployment path: production refuses an insecure API_KEY_PEPPER.
+      APP_ENV: "production"
       PORT: "8080"
-      PUBLIC_APP_URL: "http://localhost:8000"
+      PUBLIC_APP_URL: "${PUBLIC_APP_URL:-http://localhost:${APP_PORT:-8000}}"
     expose:
       - "8080"
     volumes:
       # Client keys (SQLite) survive restarts and rebuilds.
       - backend-data:/app/data
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8080/health', timeout=5)"
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+    logging: *logging
     restart: unless-stopped
 
   frontend:
@@ -20,9 +45,16 @@ services:
       args:
         VITE_API_URL: ""
     ports:
-      - "8000:80"
+      - "${APP_BIND_ADDRESS:-0.0.0.0}:${APP_PORT:-8000}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging: *logging
     restart: unless-stopped
 
 volumes:
