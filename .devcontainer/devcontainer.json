@@ -1,0 +1,80 @@
+{
+    "name": "giunti",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "remoteUser": "vscode",
+    "features": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {}
+    },
+    "mounts": [
+        "source=giunti-backend-venv,target=${containerWorkspaceFolder}/backend/.venv,type=volume",
+        "source=giunti-eval-venv,target=${containerWorkspaceFolder}/eval/.venv,type=volume",
+        "source=giunti-frontend-node-modules,target=${containerWorkspaceFolder}/frontend/node_modules,type=volume",
+        "source=giunti-uv-cache,target=/home/vscode/.cache/uv,type=volume"
+    ],
+    "postCreateCommand": "sudo chown -R vscode:vscode backend/.venv eval/.venv frontend/node_modules /home/vscode/.cache/uv && just setup",
+    "forwardPorts": [
+        8080,
+        5173,
+        8000
+    ],
+    "portsAttributes": {
+        "8080": {
+            "label": "backend"
+        },
+        "5173": {
+            "label": "frontend (vite)"
+        },
+        "8000": {
+            "label": "docker compose"
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.mypy-type-checker",
+                "charliermarsh.ruff",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "tamasfe.even-better-toml",
+                "nefrob.vscode-just-syntax",
+                "ms-azuretools.vscode-docker"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "${containerWorkspaceFolder}/backend/.venv/bin/python",
+                "python.analysis.typeCheckingMode": "off",
+                "mypy-type-checker.importStrategy": "fromEnvironment",
+                "mypy-type-checker.cwd": "${nearestConfig}",
+                "ruff.nativeServer": "on",
+                "eslint.workingDirectories": [
+                    "frontend"
+                ],
+                "editor.formatOnSave": true,
+                "files.insertFinalNewline": true,
+                "files.trimTrailingWhitespace": true,
+                "[python]": {
+                    "editor.defaultFormatter": "charliermarsh.ruff",
+                    "editor.codeActionsOnSave": {
+                        "source.organizeImports": "explicit",
+                        "source.fixAll": "explicit"
+                    }
+                },
+                "[typescript]": {
+                    "editor.defaultFormatter": "esbenp.prettier-vscode"
+                },
+                "[typescriptreact]": {
+                    "editor.defaultFormatter": "esbenp.prettier-vscode"
+                },
+                "[json]": {
+                    "editor.defaultFormatter": "esbenp.prettier-vscode"
+                },
+                "[jsonc]": {
+                    "editor.defaultFormatter": "esbenp.prettier-vscode"
+                }
+            }
+        }
+    }
+}

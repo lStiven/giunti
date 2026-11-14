@@ -1,0 +1,7 @@
+"""Application errors. They know nothing about HTTP (see `app.api.error_handlers`).
+
+Stable error codes exposed to clients:
+UNSUPPORTED_FORMAT, INVALID_FILE, EMPTY_FILE, FILE_TOO_LARGE, PROTECTED_FILE, NO_TEXT,
+NO_ITEMS, LLM_UNAVAILABLE, INVALID_LLM_RESPONSE, UNAUTHENTICATED, FORBIDDEN, RATE_LIMITED,
+INTERNAL_ERROR.
+"""

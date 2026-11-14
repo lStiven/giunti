@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+
+env:
+  UV_VERSION: "0.12.5"
+  JUST_VERSION: "1.58.0"
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+      - run: uv tool install rust-just==${{ env.JUST_VERSION }}
+      - run: just backend::setup eval::setup
+      - run: just backend::check eval::check scripts-check
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: uv tool install rust-just==${{ env.JUST_VERSION }}
+      - run: just frontend::setup
+      - run: just frontend::check
+
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: uv tool install rust-just==${{ env.JUST_VERSION }}
+      - run: just frontend::setup
+      - run: just audit

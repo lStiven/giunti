@@ -1,0 +1,29 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Node
+node_modules/
+dist/
+
+# Secretos
+.env
+.env.*
+!.env.example
+
+# Evaluación: documentos con posibles derechos de autor y archivos generados
+eval/datasets/public/*
+!eval/datasets/public/README.md
+eval/datasets/synthetic/*
+!eval/datasets/synthetic/.gitkeep
+eval/results/*
+!eval/results/.gitkeep
+
+# Editor / SO
+.idea/
+.vscode/
+.DS_Store

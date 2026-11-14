@@ -1,0 +1,77 @@
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+# List the available recipes
+default:
+    @just --list --unsorted
+
+# Install dependencies from the lock file (add `--group compare` for Docling and MarkItDown)
+[group('setup')]
+setup *args:
+    uv sync --frozen {{ args }}
+
+# Sort imports and format
+[group('quality')]
+fmt:
+    uv run ruff check --select I --fix .
+    uv run ruff format .
+
+# Apply every automatic lint fix, then format
+[group('quality')]
+fix:
+    uv run ruff check --fix .
+    uv run ruff format .
+
+# Check formatting and lint rules
+[group('quality')]
+lint:
+    uv run ruff format --check .
+    uv run ruff check .
+
+# Strict static type checking (including deprecated API usage)
+[group('quality')]
+typecheck:
+    uv run mypy .
+
+# Every quality gate
+[group('quality')]
+check: lint typecheck
+
+# Fix and check one edited Python file
+[group('quality')]
+check-file path:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    [[ "{{ path }}" == *.py ]] || exit 0
+    status=0
+    step() { "$@" || status=1; }
+    step uv run --frozen ruff check --fix "{{ path }}"
+    step uv run --frozen ruff format "{{ path }}"
+    step uv run --frozen mypy .
+    exit "$status"
+
+# Fail on deprecated, yanked or vulnerable dependencies (needs network)
+[group('dependencies')]
+audit:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    python3 ../scripts/check_deprecated_deps.py eval
+    requirements="$(mktemp)"
+    trap 'rm -f "$requirements"' EXIT
+    uv export --frozen --all-groups --no-hashes --no-emit-project --format requirements-txt \
+        --output-file "$requirements" --quiet
+    uvx pip-audit --strict --disable-pip --no-deps --progress-spinner off -r "$requirements"
+
+# Report available upgrades
+[group('dependencies')]
+outdated:
+    uv tree --outdated --depth 1 --all-groups
+
+# Generate the synthetic tests
+[group('run')]
+generate:
+    uv run python -m generator.build
+
+# Run the evaluation against a running API
+[group('run')]
+evaluate api="http://localhost:8080" api_key="":
+    uv run python run_eval.py --api {{ api }} --api-key "{{ api_key }}"

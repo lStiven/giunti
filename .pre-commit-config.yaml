@@ -1,0 +1,56 @@
+default_install_hook_types: [pre-commit]
+fail_fast: false
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+        exclude: ^(\.devcontainer/devcontainer\.json|frontend/tsconfig\.json)$
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: detect-private-key
+
+  - repo: local
+    hooks:
+      - id: backend
+        name: backend (format, lint, imports, types, tests)
+        entry: just backend::check
+        language: system
+        files: ^backend/
+        pass_filenames: false
+
+      - id: eval
+        name: eval (format, lint, types)
+        entry: just eval::check
+        language: system
+        files: ^eval/
+        pass_filenames: false
+
+      - id: scripts
+        name: scripts (format, lint, types)
+        entry: just scripts-check
+        language: system
+        files: ^(scripts/|backend/pyproject\.toml$)
+        pass_filenames: false
+
+      - id: frontend
+        name: frontend (format, lint, types, build)
+        entry: just frontend::check
+        language: system
+        files: ^frontend/
+        pass_filenames: false
+
+      - id: dependency-audit
+        name: dependencies (deprecated, yanked, vulnerable)
+        entry: just audit
+        language: system
+        files: ^(backend|eval|frontend)/(pyproject\.toml|uv\.lock|package\.json|package-lock\.json)$
+        pass_filenames: false

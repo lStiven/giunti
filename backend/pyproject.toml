@@ -1,0 +1,98 @@
+[project]
+name = "giunti-backend"
+version = "0.1.0"
+description = "API that extracts questionnaire items from PDF, DOCX and XLSX files into structured JSON using LLMs with fallback."
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.9",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "litellm>=1.60",
+    "pdfplumber>=0.11",
+    "pypdfium2>=4.30",
+    "openpyxl>=3.1",
+    "defusedxml>=0.7",
+    "pillow>=10.4",
+    "rapidfuzz>=3.9",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+    "ruff>=0.17",
+    "mypy>=1.13",
+    "import-linter>=2.1",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F", "I", "N", "UP", "B", "A", "C4", "DTZ", "T10", "T20", "ISC", "ICN", "PIE",
+    "PT", "RET", "SIM", "TID", "ARG", "PTH", "ERA", "PL", "RUF", "ANN", "ASYNC", "S", "LOG",
+    "G", "PERF", "FURB", "BLE", "EM", "FBT",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "PLR2004"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+warn_unreachable = true
+enable_error_code = [
+    "deprecated",
+    "explicit-override",
+    "ignore-without-code",
+    "possibly-undefined",
+    "redundant-expr",
+    "truthy-bool",
+    "unused-awaitable",
+]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-q --strict-markers"
+filterwarnings = ["error::DeprecationWarning", "error::PendingDeprecationWarning"]
+
+[tool.importlinter]
+root_package = "app"
+
+[[tool.importlinter.contracts]]
+name = "Reusable base modules do not depend on the problem-specific extraction module"
+type = "forbidden"
+source_modules = ["app.core", "app.api", "app.auth", "app.documents", "app.llm"]
+forbidden_modules = ["app.extraction"]
+
+[[tool.importlinter.contracts]]
+name = "Core does not depend on any other app module"
+type = "forbidden"
+source_modules = ["app.core"]
+forbidden_modules = ["app.api", "app.auth", "app.documents", "app.llm", "app.extraction"]

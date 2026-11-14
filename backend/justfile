@@ -1,0 +1,94 @@
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+# List the available recipes
+default:
+    @just --list --unsorted
+
+# Install dependencies from the lock file
+[group('setup')]
+setup:
+    uv sync --frozen
+
+# Sort imports and format
+[group('quality')]
+fmt:
+    uv run ruff check --select I --fix .
+    uv run ruff format .
+
+# Apply every automatic lint fix, then format
+[group('quality')]
+fix:
+    uv run ruff check --fix .
+    uv run ruff format .
+
+# Check formatting, lint rules and architecture import contracts
+[group('quality')]
+lint:
+    uv run ruff format --check .
+    uv run ruff check .
+    PYTHONPATH=. uv run lint-imports
+
+# Strict static type checking (including deprecated API usage)
+[group('quality')]
+typecheck:
+    uv run mypy .
+
+# Run the tests (extra arguments go to pytest)
+[group('quality')]
+test *args:
+    uv run pytest {{ args }}
+
+# Every quality gate
+[group('quality')]
+check: lint typecheck test
+
+# Fix and check one edited Python file
+[group('quality')]
+check-file path:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    [[ "{{ path }}" == *.py ]] || exit 0
+    status=0
+    step() { "$@" || status=1; }
+    step uv run --frozen ruff check --fix "{{ path }}"
+    step uv run --frozen ruff format "{{ path }}"
+    step uv run --frozen mypy .
+    step env PYTHONPATH=. uv run --frozen lint-imports
+    exit "$status"
+
+# Fail on deprecated, yanked or vulnerable dependencies (needs network)
+[group('dependencies')]
+audit:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    python3 ../scripts/check_deprecated_deps.py backend
+    requirements="$(mktemp)"
+    trap 'rm -f "$requirements"' EXIT
+    uv export --frozen --all-groups --no-hashes --no-emit-project --format requirements-txt \
+        --output-file "$requirements" --quiet
+    uvx pip-audit --strict --disable-pip --no-deps --progress-spinner off -r "$requirements"
+
+# Report available upgrades
+[group('dependencies')]
+outdated:
+    uv tree --outdated --depth 1 --all-groups
+
+# Run the API with auto-reload on http://localhost:8080
+[group('run')]
+dev:
+    uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
+
+# Build the production image
+[group('run')]
+build-image:
+    docker build -t giunti-backend .
+
+# Create an API key for a client
+[group('admin')]
+create-key client daily_limit="100":
+    uv run python -m app.auth.create_key --client {{ client }} --daily-limit {{ daily_limit }}
+
+# Remove caches
+[group('admin')]
+clean:
+    find . -path ./.venv -prune -o -type d \( -name __pycache__ -o -name .pytest_cache -o -name .ruff_cache -o -name .mypy_cache \) -prune -exec rm -rf {} +

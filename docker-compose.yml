@@ -1,0 +1,22 @@
+# Full stack on one host: cp backend/.env.example backend/.env, then `just up`.
+# Frontend on http://localhost:8000, API proxied by nginx under /api.
+services:
+  backend:
+    build: ./backend
+    env_file: ./backend/.env
+    environment:
+      PORT: "8080"
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ""
+    ports:
+      - "8000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

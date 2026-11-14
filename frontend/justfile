@@ -1,0 +1,88 @@
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+# List the available recipes
+default:
+    @just --list --unsorted
+
+# Install dependencies from the lock file
+[group('setup')]
+setup:
+    npm ci --no-audit --no-fund
+
+# Format
+[group('quality')]
+fmt:
+    npx prettier --write .
+
+# Apply every automatic lint fix, then format
+[group('quality')]
+fix:
+    npx eslint --fix .
+    npx prettier --write .
+
+# Check formatting and lint rules (including deprecated API usage)
+[group('quality')]
+lint:
+    npx prettier --check .
+    npx eslint --max-warnings=0 .
+
+# Strict static type checking
+[group('quality')]
+typecheck:
+    npx tsc --noEmit
+
+# Production build
+[group('quality')]
+build:
+    npx vite build --logLevel warn
+
+# Every quality gate
+[group('quality')]
+check: lint typecheck build
+
+# Fix and check one edited file
+[group('quality')]
+check-file path:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    if ! command -v node >/dev/null || [[ ! -d node_modules ]]; then
+        echo "Skipped {{ path }}: Node.js toolchain not available"
+        exit 0
+    fi
+    status=0
+    step() { "$@" || status=1; }
+    step npx --no-install prettier --write --ignore-unknown "{{ path }}"
+    case "{{ path }}" in
+        *.ts | *.tsx | *.js)
+            step npx --no-install eslint --fix --max-warnings=0 "{{ path }}"
+            step npx --no-install tsc --noEmit
+            ;;
+    esac
+    exit "$status"
+
+# Fail on deprecated or vulnerable dependencies (needs network)
+[group('dependencies')]
+audit:
+    python3 ../scripts/check_deprecated_deps.py frontend
+    npm audit --omit=dev --audit-level=moderate
+    npm audit --audit-level=high
+
+# Report available upgrades
+[group('dependencies')]
+outdated:
+    npm outdated || true
+
+# Run the dev server on http://localhost:5173
+[group('run')]
+dev:
+    npx vite --host 0.0.0.0
+
+# Build the production image
+[group('run')]
+build-image:
+    docker build -t giunti-frontend .
+
+# Remove build outputs
+[group('admin')]
+clean:
+    rm -rf dist
