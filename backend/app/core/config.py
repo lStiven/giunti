@@ -104,16 +104,7 @@ def load_catalog(path: Path) -> LLMCatalog:
 CLIENT_ID_PATTERN = r"^[a-z0-9][a-z0-9-]{0,31}$"
 MIN_PEPPER_LENGTH = 32
 PEPPER_PLACEHOLDER_PREFIX = "change-me"
-
-
-class ApiKeyEntry(BaseModel):
-    """An authorized client. Only the HMAC hash of its key is stored."""
-
-    id: str = Field(pattern=CLIENT_ID_PATTERN)
-    hash: str = Field(pattern=r"^[0-9a-f]{64}$")
-    active: bool = True
-    per_minute_limit: int = Field(default=10, ge=1)
-    daily_limit: int = Field(default=100, ge=1)
+DEFAULT_DATABASE_URL = f"sqlite:///{Path(__file__).resolve().parents[2] / 'data' / 'giunti.db'}"
 
 
 class Settings(BaseSettings):
@@ -141,13 +132,23 @@ class Settings(BaseSettings):
     llm_repair_attempts: int = 1
     extraction_pages_per_part: int = Field(default=8, ge=1)
     extraction_parallel_parts: int = Field(default=4, ge=1)
+    extraction_answer_key_pass: bool = Field(
+        default=True,
+        description="Read the answer key in one extra call for items left without an answer",
+    )
     gemini_api_key: SecretStr | None = None
     llm_api_keys: dict[str, SecretStr] = Field(
         default={}, description='Keys of the other providers: {"<provider>": "<key>"}'
     )
 
     api_key_pepper: SecretStr = SecretStr("")
-    api_keys: list[ApiKeyEntry] = []
+    database_url: str = Field(
+        default=DEFAULT_DATABASE_URL,
+        description="Where client keys live; a SQLite file by default, Postgres in the cloud",
+    )
+    public_app_url: str = Field(
+        default="http://localhost:5173", description="Frontend address, used in invitation links"
+    )
 
     @model_validator(mode="after")
     def _load_catalog(self) -> Self:
@@ -156,12 +157,7 @@ class Settings(BaseSettings):
         return self
 
     @model_validator(mode="after")
-    def _check_api_keys(self) -> Self:
-        ids = [entry.id for entry in self.api_keys]
-        duplicated = sorted({client for client in ids if ids.count(client) > 1})
-        if duplicated:
-            message = f"API_KEYS has duplicated client ids: {', '.join(duplicated)}"
-            raise ValueError(message)
+    def _check_pepper(self) -> Self:
         if self.app_env == "production" and not self.has_secure_pepper():
             message = (
                 f"API_KEY_PEPPER must be a random secret of at least {MIN_PEPPER_LENGTH} "

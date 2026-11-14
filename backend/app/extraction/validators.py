@@ -31,7 +31,7 @@ def questionnaire_rules(pages: Collection[int]) -> Callable[[ExtractedQuestionna
             listed = ", ".join(map(str, repeated))
             errors.append(f"Item numbers {listed} are repeated; numbers must be unique.")
         for index, item in enumerate(questionnaire.items):
-            errors += [f"items[{index}] (numero {item.number}): {e}" for e in _item_errors(item)]
+            errors += [f"items[{index}] (numero {item.number}): {e}" for e in item_errors(item)]
             if item.page not in allowed:
                 errors.append(
                     f"items[{index}] (numero {item.number}): pagina {item.page} is outside the "
@@ -42,7 +42,8 @@ def questionnaire_rules(pages: Collection[int]) -> Callable[[ExtractedQuestionna
     return validate
 
 
-def _item_errors(item: ExtractedItem) -> list[str]:
+def item_errors(item: ExtractedItem) -> list[str]:
+    """The rule violations of one item, including its correct answer and evidence."""
     errors = _shape_errors(item)
     if item.correct_answer is not None:
         if not item.correct_answer:

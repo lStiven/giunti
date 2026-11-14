@@ -10,6 +10,9 @@ __pycache__/
 node_modules/
 dist/
 
+# Base de datos local (claves de clientes)
+backend/data/
+
 # Secretos
 .env
 .env.*

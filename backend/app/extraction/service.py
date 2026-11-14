@@ -1,7 +1,8 @@
 """Use case `process(file) -> ExtractionOutcome`, independent of the HTTP transport.
 
 Validate the chosen model, read the document, extract it in parts on that model (several at a
-time), merge and check the result, and strip the internal fields. A part whose answer is cut
+time), merge and check the result, read the answer key for items still without an answer (see
+`answer_key`), and strip the internal fields. A part whose answer is cut
 off by the model's output limit is split in two and retried; any other failure fails the whole
 request, because an incomplete questionnaire must not look complete. Fails with NO_ITEMS when
 nothing is found.
@@ -16,6 +17,7 @@ from app.core.config import Settings
 from app.core.errors import AppError, ErrorCode
 from app.documents.models import ExtractedDocument
 from app.documents.registry import extract
+from app.extraction.answer_key import KeyAnswers, KeyFill, fill_from_answer_key
 from app.extraction.chunking import Chunk, merge, plan_chunks, split_chunk
 from app.extraction.grounding import document_warnings, missing_item_numbers
 from app.extraction.prompt import build_content
@@ -60,24 +62,35 @@ class QuestionnaireExtractor:
             for part in await _all_or_none([run.extract(chunk) for chunk in chunks])
             for result in part
         ]
-        llm_duration_ms = round((time.perf_counter() - started) * 1000)
 
         extracted = merge([result.value for result in results])
         if not extracted.items:
             raise AppError(ErrorCode.NO_ITEMS)
+        key_fill = KeyFill(extracted)
+        if self._settings.extraction_answer_key_pass:
+            key_fill = await fill_from_answer_key(self._runner, document, extracted, model.id)
+            extracted = key_fill.questionnaire
+        llm_duration_ms = round((time.perf_counter() - started) * 1000)
+
         warnings = [*document_warnings(document, extracted)]
         warnings += [warning for result in results for warning in result.warnings]
         if len(results) > 1:
             # Each part checked its own pages; this catches items lost between parts.
             warnings += missing_item_numbers(document, extracted)
+        warnings += key_fill.warnings
+        usage: list[StructuredResult[ExtractedQuestionnaire] | StructuredResult[KeyAnswers]] = [
+            *results
+        ]
+        if key_fill.result is not None:
+            usage.append(key_fill.result)
         return ExtractionOutcome(
             questionnaire=extracted.to_public(),
             model_id=model.id,
             warnings=tuple(warnings),
             parts=len(results),
-            input_tokens=sum(result.input_tokens for result in results),
-            output_tokens=sum(result.output_tokens for result in results),
-            repairs=sum(result.repairs for result in results),
+            input_tokens=sum(result.input_tokens for result in usage),
+            output_tokens=sum(result.output_tokens for result in usage),
+            repairs=sum(result.repairs for result in usage),
             llm_duration_ms=llm_duration_ms,
         )
 

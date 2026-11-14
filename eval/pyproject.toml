@@ -49,6 +49,8 @@ known-first-party = ["generator"]
 python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
+# Run outputs (git-ignored, like for ruff): not part of the evaluation code.
+exclude = ["^results/"]
 warn_unreachable = true
 enable_error_code = [
     "deprecated",

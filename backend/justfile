@@ -83,10 +83,15 @@ dev:
 build-image:
     docker build -t giunti-backend .
 
-# Create an API key for a client
+# Create an administrator (prints the link to the admin panel); needed once, then use the panel
 [group('admin')]
-create-key client daily_limit="100" per_minute_limit="10":
-    uv run python -m app.auth.create_key --client {{ client }} --daily-limit {{ daily_limit }} --per-minute-limit {{ per_minute_limit }}
+create-admin name="Administración":
+    uv run python -m app.auth.create_key --name "{{ name }}" --admin
+
+# Create a client from the terminal (the admin panel does the same)
+[group('admin')]
+create-key name daily_limit="100" per_minute_limit="10":
+    uv run python -m app.auth.create_key --name "{{ name }}" --daily-limit {{ daily_limit }} --per-minute-limit {{ per_minute_limit }}
 
 # Remove caches
 [group('admin')]

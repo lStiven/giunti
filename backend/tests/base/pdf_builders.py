@@ -1,5 +1,6 @@
 """Builds small PDFs in memory so document tests never depend on fixture files."""
 
+from collections.abc import Sequence
 from io import BytesIO
 
 from PIL import Image
@@ -52,6 +53,19 @@ def text_pdf(pages: int = 1) -> bytes:
     for number in range(1, pages + 1):
         canvas.setFont("Helvetica", 12)
         canvas.drawString(LEFT, 800, f"Pagina {number}: indica quanto sei d'accordo.")
+        canvas.showPage()
+    canvas.save()
+    return buffer.getvalue()
+
+
+def lines_pdf(*pages: Sequence[str]) -> bytes:
+    """One page per argument, each with its lines of text."""
+    buffer = BytesIO()
+    canvas = Canvas(buffer, pagesize=A4)
+    for lines in pages:
+        canvas.setFont("Helvetica", 12)
+        for index, line in enumerate(lines):
+            canvas.drawString(LEFT, 800 - 20 * index, line)
         canvas.showPage()
     canvas.save()
     return buffer.getvalue()

@@ -1,17 +1,21 @@
 from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 from fastapi import Response
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.auth.create_key import main as create_key_main
 from app.auth.dependencies import AuthenticatedClient, get_rate_limiter, require_extraction_quota
 from app.auth.keys import client_id_of, generate_key, hash_key, key_matches
 from app.auth.rate_limit import Quota, RateLimiter
-from app.core.config import ApiKeyEntry, LLMCatalog, Settings, get_settings
+from app.auth.store import ClientRepository, NewClient
+from app.core.config import LLMCatalog, Settings, get_settings
+from app.core.database import make_engine
 from app.core.errors import AppError, ErrorCode
 from app.main import app
 
@@ -27,23 +31,42 @@ ACME_KEY = generate_key("acme")
 OFF_KEY = generate_key("off")
 
 
-def _settings() -> Settings:
-    return Settings(
-        api_key_pepper=SecretStr(PEPPER),
-        api_keys=[
-            ApiKeyEntry(id="acme", hash=hash_key(ACME_KEY, PEPPER), daily_limit=5),
-            ApiKeyEntry(id="off", hash=hash_key(OFF_KEY, PEPPER), active=False),
-        ],
-        llm_catalog=CATALOG,
-        gemini_api_key=SecretStr("g"),
-    )
+def _settings(**overrides: object) -> Settings:
+    values: dict[str, object] = {
+        "api_key_pepper": SecretStr(PEPPER),
+        "llm_catalog": CATALOG,
+        "gemini_api_key": SecretStr("g"),
+        **overrides,
+    }
+    return Settings.model_validate(values)
+
+
+def _default_settings() -> Settings:
+    """Dependency override: FastAPI would read `_settings` keyword arguments as query params."""
+    return _settings()
 
 
 @pytest.fixture(autouse=True)
-def _auth_settings() -> Iterator[None]:
-    app.dependency_overrides[get_settings] = _settings
+def _clients(database: sessionmaker[Session]) -> Iterator[None]:
+    with database() as session:
+        clients = ClientRepository(session)
+        clients.create(_new_client("acme", ACME_KEY, daily_limit=5))
+        clients.create(_new_client("off", OFF_KEY))
+        clients.update("off", active=False)
+    app.dependency_overrides[get_settings] = _default_settings
     yield
-    app.dependency_overrides.clear()
+    app.dependency_overrides.pop(get_settings, None)
+    app.dependency_overrides.pop(get_rate_limiter, None)
+
+
+def _new_client(client_id: str, key: str, *, daily_limit: int = 100) -> NewClient:
+    return NewClient(
+        name=client_id.title(),
+        key_hash=hash_key(key, PEPPER),
+        per_minute_limit=10,
+        daily_limit=daily_limit,
+        client_id=client_id,
+    )
 
 
 def _headers(key: str | None) -> dict[str, str]:
@@ -146,14 +169,21 @@ def test_extraction_without_key_is_rejected_before_reading_the_document() -> Non
     assert response.status_code == 401
 
 
-def test_extraction_quota_is_consumed_and_reported_in_headers() -> None:
+def test_extraction_quota_is_consumed_reported_and_marks_the_client_as_used(
+    database: sessionmaker[Session],
+) -> None:
     client = AuthenticatedClient(id="acme", quota=Quota(per_minute=10, daily=5))
     response = Response()
 
-    require_extraction_quota(response, client, RateLimiter())
+    with database() as session:
+        clients = ClientRepository(session)
+        require_extraction_quota(response, client, RateLimiter(), clients)
+        last_used = clients.find("acme")
 
     assert response.headers["X-RateLimit-Limit-Day"] == "5"
     assert response.headers["X-RateLimit-Remaining-Day"] == "4"
+    assert last_used is not None
+    assert last_used.last_used_at is not None
 
 
 def test_requests_over_the_per_minute_limit_wait_for_the_window() -> None:
@@ -210,42 +240,52 @@ def test_rate_limited_response_has_retry_after_header() -> None:
     assert int(response.headers["Retry-After"]) > 0
 
 
-def test_create_key_prints_a_key_that_verifies_against_its_entry(
-    capsys: pytest.CaptureFixture[str],
+def test_create_key_command_stores_the_client_and_prints_its_key_and_link(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    exit_code = create_key_main(["--client", "newco", "--daily-limit", "7"], settings=_settings())
+    settings = _settings(
+        database_url=f"sqlite:///{tmp_path / 'keys.db'}", public_app_url="https://app.example"
+    )
+
+    exit_code = create_key_main(["--name", "Colegio San José", "--daily-limit", "7"], settings)
 
     output = capsys.readouterr().out.splitlines()
-    key = output[1]
-    entry = ApiKeyEntry.model_validate_json(output[-1])
+    link, key = output[3], output[-1]
     assert exit_code == 0
-    assert entry.id == "newco"
-    assert entry.daily_limit == 7
-    assert key_matches(key, entry.hash, PEPPER)
+    assert link == f"https://app.example/#clave={key}"
+    engine = make_engine(settings.database_url)
+    with Session(engine) as session:
+        stored = ClientRepository(session).find("colegio-san-jose")
+    engine.dispose()
+    assert stored is not None
+    assert stored.daily_limit == 7
+    assert not stored.is_admin
+    assert key_matches(key, stored.key_hash, PEPPER)
 
 
-@pytest.mark.parametrize(
-    ("args", "settings", "message"),
-    [
-        (["--client", "acme"], _settings(), "already exists"),
-        (["--client", "newco"], Settings(api_key_pepper=SecretStr("")), "API_KEY_PEPPER is empty"),
-        (["--client", "Bad Id"], _settings(), "Invalid client id"),
-    ],
-)
-def test_create_key_refuses_unsafe_or_duplicated_keys(
-    args: list[str], settings: Settings, message: str, capsys: pytest.CaptureFixture[str]
+def test_create_key_command_creates_administrators_with_an_admin_link(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    assert create_key_main(args, settings=settings) == 1
-    assert message in capsys.readouterr().err
+    settings = _settings(database_url=f"sqlite:///{tmp_path / 'keys.db'}")
+
+    assert create_key_main(["--name", "Administración", "--admin"], settings) == 0
+
+    output = capsys.readouterr().out
+    assert output.startswith("Administrator 'Administración' created (id: administracion).")
+    assert "/admin#clave=gk_administracion_" in output
+
+
+def test_create_key_command_refuses_to_work_without_a_pepper(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    settings = _settings(
+        database_url=f"sqlite:///{tmp_path / 'keys.db'}", api_key_pepper=SecretStr("")
+    )
+
+    assert create_key_main(["--name", "Newco"], settings) == 1
+    assert "API_KEY_PEPPER is empty" in capsys.readouterr().err
 
 
 def test_production_requires_a_strong_pepper() -> None:
     with pytest.raises(ValueError, match="API_KEY_PEPPER"):
         Settings(app_env="production", api_key_pepper=SecretStr("change-me-to-a-long-random"))
-
-
-def test_duplicated_client_ids_are_rejected() -> None:
-    entry = ApiKeyEntry(id="acme", hash="0" * 64)
-
-    with pytest.raises(ValueError, match="duplicated client ids: acme"):
-        Settings(api_keys=[entry, entry])

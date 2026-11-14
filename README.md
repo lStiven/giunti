@@ -52,6 +52,18 @@ La respuesta del `POST` incluye headers con datos de la ejecución: `X-LLM-Model
 
 Los modelos se configuran en [backend/llm_catalog.toml](backend/llm_catalog.toml) y las API keys en `backend/.env` (`GEMINI_API_KEY`, `LLM_API_KEYS`).
 
+## Frontend
+
+Una sola página en tres pasos: clave de acceso (se recuerda en el navegador), archivo y modelo. Mientras espera muestra una animación, el tiempo transcurrido y un botón para cancelar; el resultado se ve como tarjetas por pregunta o como JSON (copiar y descargar), y se puede repetir con otro modelo sin volver a subir el archivo.
+
+```bash
+just backend::dev      # API en :8080
+just frontend::dev     # http://localhost:5173 (redirige /api al backend)
+just frontend::check   # formato, lint (incluida accesibilidad), tipos, tests, build y tamaño del bundle
+```
+
+Variables (`frontend/.env.example`): `VITE_API_URL` (vacía = mismo origen) y `VITE_MAX_FILE_MB` (igual a `MAX_FILE_SIZE_MB` del backend). Si el frontend se publica en otro dominio, agregarlo a `CORS_ORIGINS` del backend.
+
 ## Supuestos
 
 Cuando el enunciado admite más de una interpretación, se elige la más razonable, se registra aquí y se avanza. Cada supuesto indica qué era ambiguo, qué se asumió y por qué.
@@ -83,6 +95,7 @@ Cuando el enunciado admite más de una interpretación, se elige la más razonab
 | S15 | Valores de selección múltiple sin letras | Si el documento no rotula las opciones, se usan A, B, C… en el orden mostrado. | Da una referencia estable para `respuesta_correcta`. |
 | S16 | Verdadero/falso sin opciones escritas | Dos alternativas `V` / `F`, con el texto en el idioma del documento (por ejemplo, `Vero` / `Falso`). | El tipo implica esas dos opciones aunque el documento no las escriba. |
 | S17 | Textos con errores de extracción (palabras cortadas por guion al final de línea) | Se reconstruyen las palabras cortadas, pero el contenido se copia **literal**: sin traducir, corregir ni resumir. | Fidelidad al documento original. |
+| S22 | ¿Qué hacer si la clave de respuestas ocupa varias páginas, está solo como imagen o lejos de las preguntas? | Se busca y se usa igual: los ítems de selección, verdadero/falso o emparejamiento que quedan sin respuesta se completan con **una lectura extra de las páginas de la clave**. Si la clave no da la respuesta de un ítem o no se puede asociar con seguridad (por ejemplo, dos exámenes que reinician la numeración), queda `null` y se informa en `X-Extraction-Warnings`. Nunca se cambia una respuesta ya encontrada. | La clave al final, en una tabla de varias páginas, es el formato habitual de las pruebas estandarizadas; el usuario no puede adaptar el documento a la API. |
 
 ### Errores y acceso
 

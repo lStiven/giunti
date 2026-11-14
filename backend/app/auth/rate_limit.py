@@ -62,6 +62,12 @@ class RateLimiter:
         usage.day_count += 1
         return QuotaStatus(daily_limit=quota.daily, daily_remaining=quota.daily - usage.day_count)
 
+    def used_today(self, client_id: str) -> int:
+        """Extractions of the client today (UTC) counted by this process."""
+        usage = self._usage.get(client_id)
+        today = datetime.fromtimestamp(self._clock(), UTC).date()
+        return usage.day_count if usage is not None and usage.day == today else 0
+
 
 def _until_midnight(now: float) -> int:
     current = datetime.fromtimestamp(now, UTC)

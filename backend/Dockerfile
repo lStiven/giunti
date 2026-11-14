@@ -21,7 +21,9 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY llm_catalog.toml ./
 COPY app ./app
 
-RUN useradd --create-home appuser
+RUN useradd --create-home appuser \
+    && mkdir -p /app/data \
+    && chown appuser /app/data
 USER appuser
 
 ENV PATH="/app/.venv/bin:$PATH" \
