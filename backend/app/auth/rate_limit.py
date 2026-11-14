@@ -11,7 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 
-from app.core.errors import AppError, ErrorCode
+from app.core.errors import AppError, ErrorCode, ErrorReason
 
 WINDOW_S = 60.0
 
@@ -52,11 +52,23 @@ class RateLimiter:
 
         if usage.day_count >= quota.daily:
             message = f"Daily limit of {quota.daily} extractions reached. It resets at 00:00 UTC."
-            raise AppError(ErrorCode.RATE_LIMITED, message, retry_after_s=_until_midnight(now))
+            raise AppError(
+                ErrorCode.RATE_LIMITED,
+                message,
+                retry_after_s=_until_midnight(now),
+                reason=ErrorReason.DAILY_LIMIT,
+                details={"limit": quota.daily},
+            )
         if len(usage.recent) >= quota.per_minute:
             wait = math.ceil(WINDOW_S - (now - usage.recent[0]))
             message = f"Limit of {quota.per_minute} extractions per minute reached."
-            raise AppError(ErrorCode.RATE_LIMITED, message, retry_after_s=max(wait, 1))
+            raise AppError(
+                ErrorCode.RATE_LIMITED,
+                message,
+                retry_after_s=max(wait, 1),
+                reason=ErrorReason.PER_MINUTE_LIMIT,
+                details={"limit": quota.per_minute},
+            )
 
         usage.recent.append(now)
         usage.day_count += 1

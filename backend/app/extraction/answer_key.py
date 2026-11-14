@@ -22,6 +22,7 @@ from app.documents.models import DocumentPage, ExtractedDocument, PageSource
 from app.extraction.grounding import normalize
 from app.extraction.schema import Alternative, ExtractedItem, ExtractedQuestionnaire, ItemType
 from app.extraction.validators import item_errors
+from app.extraction.warnings import ExtractionWarning, WarningCode
 from app.llm.client import ContentPart, ImagePart, TextPart
 from app.llm.structured import ExtractionTask, StructuredResult, StructuredRunner
 
@@ -103,7 +104,7 @@ class KeyAnswers(BaseModel):
 @dataclass(frozen=True, slots=True)
 class KeyFill:
     questionnaire: ExtractedQuestionnaire
-    warnings: tuple[str, ...] = ()
+    warnings: tuple[ExtractionWarning, ...] = ()
     result: StructuredResult[KeyAnswers] | None = None
 
 
@@ -154,22 +155,28 @@ async def fill_from_answer_key(
             model_id=model_id,
         )
     except AppError as error:
-        missing = _listed([item.number for item in pending])
-        warning = (
+        numbers = tuple(item.number for item in pending)
+        message = (
             f"The answer key on pages {_listed(key_pages)} could not be read ({error.message}); "
-            f"items {missing} have no correct answer."
+            f"items {_listed(numbers)} have no correct answer."
+        )
+        warning = ExtractionWarning(
+            WarningCode.ANSWER_KEY_UNREAD, message, items=numbers, pages=key_pages
         )
         return KeyFill(questionnaire, (warning,))
 
     filled = apply_answers(questionnaire, by_number, result.value)
-    left = [item.number for item in pending_items(filled) if item.number in by_number]
-    warnings = list(result.warnings)
-    if left:
-        warnings.append(
-            f"An answer key was found on pages {_listed(key_pages)}, but items {_listed(left)} "
-            "still have no correct answer; check them against the document."
-        )
-    return KeyFill(filled, tuple(warnings), result)
+    left = tuple(item.number for item in pending_items(filled) if item.number in by_number)
+    if not left:
+        return KeyFill(filled, (), result)
+    message = (
+        f"An answer key was found on pages {_listed(key_pages)}, but items {_listed(left)} "
+        "still have no correct answer; check them against the document."
+    )
+    warning = ExtractionWarning(
+        WarningCode.ANSWERS_NOT_IN_KEY, message, items=left, pages=key_pages
+    )
+    return KeyFill(filled, (warning,), result)
 
 
 def answer_key_task(pending: dict[int, ExtractedItem]) -> ExtractionTask[KeyAnswers]:

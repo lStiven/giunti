@@ -25,6 +25,9 @@ class CircuitBreaker:
     def is_available(self) -> bool:
         return self.clock() >= self._open_until
 
+    def seconds_until_available(self) -> float:
+        return max(0.0, self._open_until - self.clock())
+
     def record_success(self) -> None:
         self._consecutive_failures = 0
         self._open_until = 0.0

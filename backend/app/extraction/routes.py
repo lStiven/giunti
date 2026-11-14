@@ -2,7 +2,8 @@
 questionnaire JSON.
 
 The JSON body is the contract fixed by the problem statement; data about the run goes in
-headers: the model used, token usage, LLM time, repairs and warnings (a JSON list of strings).
+headers: the model used, token usage, LLM time, repairs and warnings (a JSON list of objects
+with `code`, `message`, `items` and `pages`; see `app.extraction.warnings`).
 """
 
 import json
@@ -63,5 +64,5 @@ def _set_run_headers(response: Response, outcome: ExtractionOutcome) -> None:
     response.headers["X-LLM-Repairs"] = str(outcome.repairs)
     response.headers["X-LLM-Duration-Ms"] = str(outcome.llm_duration_ms)
     response.headers["X-Extraction-Parts"] = str(outcome.parts)
-    warnings = list(outcome.warnings[:MAX_WARNING_HEADER_ITEMS])
+    warnings = [warning.as_json() for warning in outcome.warnings[:MAX_WARNING_HEADER_ITEMS]]
     response.headers["X-Extraction-Warnings"] = json.dumps(warnings, ensure_ascii=True)

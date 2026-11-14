@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
 
-import { formatDuration, languageName } from "../messages";
+import { formatDuration, languageName, noticeText } from "../messages";
 import type { ExtractionResult } from "../types/questionnaire";
 import { CopyIcon, DownloadIcon, SparkIcon } from "./icons";
 import { ItemCard } from "./ItemCard";
@@ -91,16 +91,16 @@ export function ResultView({
         )}
       </dl>
 
-      {run.warnings.length > 0 && (
+      {run.notices.length > 0 && (
         <details className="notice notice--warning">
           <summary>
-            {run.warnings.length === 1
+            {run.notices.length === 1
               ? "1 aviso: revisa este punto"
-              : `${String(run.warnings.length)} avisos: revisa estos puntos`}
+              : `${String(run.notices.length)} avisos: revisa estos puntos`}
           </summary>
           <ul className="notice__list">
-            {run.warnings.map((warning) => (
-              <li key={warning}>{warning}</li>
+            {run.notices.map((notice) => (
+              <li key={`${notice.code}:${notice.message}`}>{noticeText(notice)}</li>
             ))}
           </ul>
         </details>

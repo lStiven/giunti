@@ -16,7 +16,7 @@ from enum import StrEnum
 
 from litellm import exceptions as litellm_errors
 
-from app.core.errors import AppError, ErrorCode
+from app.core.errors import AppError, ErrorCode, ErrorDetails, ErrorReason
 
 _MAX_DETAIL_CHARS = 300
 _SECRET = re.compile(
@@ -55,10 +55,17 @@ class ModelCallError(Exception):
 class LLMRunError(AppError):
     """The chosen model could not produce a valid result. `kind` is why, when it was called."""
 
-    def __init__(
-        self, code: ErrorCode, message: str | None = None, *, kind: FailureKind | None = None
+    def __init__(  # noqa: PLR0913 - the error contract plus the failure kind
+        self,
+        code: ErrorCode,
+        message: str | None = None,
+        *,
+        kind: FailureKind | None = None,
+        reason: ErrorReason | None = None,
+        retry_after_s: int | None = None,
+        details: ErrorDetails | None = None,
     ) -> None:
-        super().__init__(code, message)
+        super().__init__(code, message, reason=reason, retry_after_s=retry_after_s, details=details)
         self.kind = kind
 
 

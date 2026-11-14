@@ -6,6 +6,7 @@ import {
   type Alternative,
   type Item,
   type ModelCatalog,
+  type ExtractionNotice,
   type ModelInfo,
   type ProviderModels,
   type Questionnaire,
@@ -13,10 +14,16 @@ import {
 
 type UnknownRecord = Record<string, unknown>;
 
+export type ErrorDetails = Record<string, number | string>;
+
 export interface ApiErrorBody {
   code: string;
   message: string;
   request_id: string | null;
+  /** Why it happened, when one code covers situations that need different actions. */
+  reason: string | null;
+  /** Data for the message: limits, counts, the model id. */
+  details: ErrorDetails;
 }
 
 function isRecord(value: unknown): value is UnknownRecord {
@@ -107,18 +114,63 @@ export function apiErrorBody(value: unknown): ApiErrorBody | null {
     code: error["code"],
     message: error["message"],
     request_id: isString(error["request_id"]) ? error["request_id"] : null,
+    reason: isString(error["reason"]) ? error["reason"] : null,
+    details: errorDetails(error["details"]),
   };
 }
 
-/** The warnings header is a JSON list of strings; anything else counts as no warnings. */
-export function parseWarnings(header: string | null): string[] {
+function errorDetails(value: unknown): ErrorDetails {
+  if (!isRecord(value)) {
+    return {};
+  }
+  const details: ErrorDetails = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (typeof entry === "number" || isString(entry)) {
+      details[key] = entry;
+    }
+  }
+  return details;
+}
+
+function isNumber(value: unknown): value is number {
+  return typeof value === "number";
+}
+
+function noticeFrom(value: unknown): ExtractionNotice | null {
+  if (isString(value)) {
+    return { code: "unknown", message: value, items: [], pages: [] };
+  }
+  if (!isRecord(value) || !isString(value["code"]) || !isString(value["message"])) {
+    return null;
+  }
+  return {
+    code: value["code"],
+    message: value["message"],
+    items: isArrayOf(value["items"], isNumber) ? value["items"] : [],
+    pages: isArrayOf(value["pages"], isNumber) ? value["pages"] : [],
+  };
+}
+
+/**
+ * The warnings header: a JSON list of objects `{code, message, items, pages}` (plain strings
+ * from older servers are accepted). Anything else counts as no warnings.
+ */
+export function parseNotices(header: string | null): ExtractionNotice[] {
   if (header === null) {
     return [];
   }
   try {
     const parsed: unknown = JSON.parse(header);
-    return isArrayOf(parsed, isString) ? parsed : [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed.map(noticeFrom).filter((notice) => notice !== null);
   } catch {
     return [];
   }
+}
+
+/** The warnings' messages (see `parseNotices`). */
+export function parseWarnings(header: string | null): string[] {
+  return parseNotices(header).map((notice) => notice.message);
 }

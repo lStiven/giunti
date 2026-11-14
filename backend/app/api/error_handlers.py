@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.middleware import REQUEST_ID_HEADER
-from app.core.errors import DEFAULT_MESSAGES, AppError, ErrorCode
+from app.core.errors import DEFAULT_MESSAGES, AppError, ErrorCode, ErrorDetails, ErrorReason
 
 HTTP_STATUS_BY_CODE: dict[ErrorCode, int] = {
     ErrorCode.UNAUTHENTICATED: 401,
@@ -43,6 +43,11 @@ class ErrorDetail(BaseModel):
     code: ErrorCode
     message: str
     request_id: str | None
+    reason: ErrorReason | None = None
+    """Why it happened, when the code covers situations that need different user actions."""
+
+    details: ErrorDetails | None = None
+    """Data for the user message, such as `limit` and `actual` or the `model` id."""
 
 
 class ErrorResponse(BaseModel):
@@ -56,32 +61,49 @@ def _request_id(request: Request) -> str | None:
     return request_id if isinstance(request_id, str) else None
 
 
-def _error_response(
+def _error_response(  # noqa: PLR0913 - one argument per field of the error body
     request: Request,
     code: ErrorCode,
     message: str,
     *,
     status_code: int | None = None,
     headers: dict[str, str] | None = None,
+    reason: ErrorReason | None = None,
+    details: ErrorDetails | None = None,
 ) -> JSONResponse:
     request_id = _request_id(request)
-    body = ErrorResponse(error=ErrorDetail(code=code, message=message, request_id=request_id))
+    detail = ErrorDetail(
+        code=code, message=message, request_id=request_id, reason=reason, details=details or None
+    )
+    body = ErrorResponse(error=detail)
     response_headers = dict(headers or {})
     if request_id is not None:
         response_headers[REQUEST_ID_HEADER] = request_id
     return JSONResponse(
         status_code=status_code or HTTP_STATUS_BY_CODE[code],
-        content=body.model_dump(mode="json"),
+        # `reason` and `details` only appear when there is something to say.
+        content=body.model_dump(mode="json", exclude={"error": _empty_fields(detail)}),
         headers=response_headers,
     )
+
+
+def _empty_fields(detail: ErrorDetail) -> set[str]:
+    return {name for name in ("reason", "details") if getattr(detail, name) is None}
 
 
 def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def handle_app_error(request: Request, exc: AppError) -> JSONResponse:
-        logger.info("request failed", extra={"error_code": exc.code})
+        logger.info("request failed", extra={"error_code": exc.code, "reason": exc.reason})
         headers = {"Retry-After": str(exc.retry_after_s)} if exc.retry_after_s is not None else None
-        return _error_response(request, exc.code, exc.message, headers=headers)
+        return _error_response(
+            request,
+            exc.code,
+            exc.message,
+            headers=headers,
+            reason=exc.reason,
+            details=exc.details,
+        )
 
     @app.exception_handler(RequestValidationError)
     async def handle_validation_error(
@@ -90,7 +112,9 @@ def register_error_handlers(app: FastAPI) -> None:
         # Only field locations are reported: the rejected input could contain document content.
         fields = sorted({".".join(str(part) for part in error["loc"]) for error in exc.errors()})
         message = f"{DEFAULT_MESSAGES[ErrorCode.INVALID_REQUEST]} Check: {', '.join(fields)}."
-        return _error_response(request, ErrorCode.INVALID_REQUEST, message)
+        return _error_response(
+            request, ErrorCode.INVALID_REQUEST, message, reason=ErrorReason.INVALID_FIELDS
+        )
 
     @app.exception_handler(StarletteHTTPException)
     async def handle_http_exception(request: Request, exc: StarletteHTTPException) -> JSONResponse:

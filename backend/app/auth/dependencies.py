@@ -22,7 +22,7 @@ from app.auth.rate_limit import Quota, RateLimiter
 from app.auth.store import ClientRepository
 from app.core.config import Settings, get_settings
 from app.core.database import get_session
-from app.core.errors import AppError, ErrorCode
+from app.core.errors import AppError, ErrorCode, ErrorReason
 
 API_KEY_HEADER = "X-API-Key"
 INVALID_KEY_MESSAGE = "The API key is not valid."
@@ -59,7 +59,7 @@ def require_client(
 ) -> AuthenticatedClient:
     if not api_key:
         message = f"An API key is required in the {API_KEY_HEADER} header."
-        raise AppError(ErrorCode.UNAUTHENTICATED, message)
+        raise AppError(ErrorCode.UNAUTHENTICATED, message, reason=ErrorReason.MISSING_KEY)
     pepper = settings.api_key_pepper.get_secret_value()
     if not pepper:
         logger.error("api key pepper is not configured")
@@ -71,10 +71,14 @@ def require_client(
         # Same work as a wrong key, so the response time does not reveal existing clients.
         key_matches(api_key, hash_key(_DUMMY_KEY, pepper), pepper)
         logger.warning("authentication failed", extra={"reason": "unknown client"})
-        raise AppError(ErrorCode.UNAUTHENTICATED, INVALID_KEY_MESSAGE)
+        raise AppError(
+            ErrorCode.UNAUTHENTICATED, INVALID_KEY_MESSAGE, reason=ErrorReason.INVALID_KEY
+        )
     if not key_matches(api_key, client.key_hash, pepper):
         logger.warning("authentication failed", extra={"reason": "wrong key", "client": client.id})
-        raise AppError(ErrorCode.UNAUTHENTICATED, INVALID_KEY_MESSAGE)
+        raise AppError(
+            ErrorCode.UNAUTHENTICATED, INVALID_KEY_MESSAGE, reason=ErrorReason.INVALID_KEY
+        )
     if not client.active:
         logger.warning("authentication failed", extra={"reason": "inactive", "client": client.id})
         raise AppError(ErrorCode.FORBIDDEN, "This API key has been disabled.")

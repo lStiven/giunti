@@ -12,10 +12,12 @@ import tempfile
 from dataclasses import dataclass, replace
 from pathlib import Path
 
-from app.core.errors import AppError, ErrorCode
+from app.core.errors import AppError, ErrorCode, ErrorReason
 from app.documents.models import DocumentFormat, ExtractedDocument
 from app.documents.pdf import extract_pdf
 from app.documents.rendering import RenderOptions
+
+CONVERSION_FAILED = "The DOCX file could not be converted."
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +63,9 @@ def convert_to_pdf(data: bytes, libreoffice: LibreOfficeOptions) -> bytes:
         _run(command, libreoffice.timeout_s)
         output = work / "document.pdf"
         if not output.is_file() or output.stat().st_size == 0:
-            raise AppError(ErrorCode.INVALID_FILE, "The DOCX file could not be converted.")
+            raise AppError(
+                ErrorCode.INVALID_FILE, CONVERSION_FAILED, reason=ErrorReason.CONVERSION_FAILED
+            )
         return output.read_bytes()
 
 
@@ -86,11 +90,15 @@ def _run(command: list[str], timeout_s: int) -> None:
         process.communicate()
         logger.warning("libreoffice conversion timed out", extra={"timeout_s": timeout_s})
         message = "The DOCX file took too long to convert. Try a smaller or simpler file."
-        raise AppError(ErrorCode.INVALID_FILE, message) from exc
+        raise AppError(
+            ErrorCode.INVALID_FILE, message, reason=ErrorReason.CONVERSION_FAILED
+        ) from exc
 
     if process.returncode != 0:
         logger.warning(
             "libreoffice conversion failed",
             extra={"returncode": process.returncode, "stderr": stderr.decode(errors="replace")},
         )
-        raise AppError(ErrorCode.INVALID_FILE, "The DOCX file could not be converted.")
+        raise AppError(
+            ErrorCode.INVALID_FILE, CONVERSION_FAILED, reason=ErrorReason.CONVERSION_FAILED
+        )

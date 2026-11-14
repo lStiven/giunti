@@ -12,7 +12,7 @@ from pathlib import PurePath
 from zipfile import BadZipFile, ZipFile
 
 from app.core.config import Settings
-from app.core.errors import AppError, ErrorCode
+from app.core.errors import AppError, ErrorCode, ErrorReason
 from app.documents.docx import LibreOfficeOptions, extract_docx
 from app.documents.models import DocumentFormat, ExtractedDocument
 from app.documents.pdf import extract_pdf
@@ -84,10 +84,16 @@ def extract(data: bytes, filename: str, settings: Settings) -> ExtractedDocument
     check_not_ole_container(data)
     detected = detect_format(data)
     if detected is None:
-        raise AppError(ErrorCode.INVALID_FILE, "The file content is not a PDF, DOCX or XLSX.")
+        message = "The file content is not a PDF, DOCX or XLSX."
+        raise AppError(ErrorCode.INVALID_FILE, message, reason=ErrorReason.NOT_A_DOCUMENT)
     if detected is not declared:
         message = f"The file extension does not match its content ({detected.upper()})."
-        raise AppError(ErrorCode.INVALID_FILE, message)
+        raise AppError(
+            ErrorCode.INVALID_FILE,
+            message,
+            reason=ErrorReason.EXTENSION_MISMATCH,
+            details={"declared": declared.value, "detected": detected.value},
+        )
     if detected is not DocumentFormat.PDF:
         check_office_archive(data, settings.max_uncompressed_mb)
 
@@ -125,5 +131,5 @@ def _format_from_extension(filename: str) -> DocumentFormat:
     document_format = EXTENSIONS.get(suffix)
     if document_format is None:
         message = "Unsupported file format. Upload a PDF, DOCX or XLSX file."
-        raise AppError(ErrorCode.UNSUPPORTED_FORMAT, message)
+        raise AppError(ErrorCode.UNSUPPORTED_FORMAT, message, reason=ErrorReason.UNKNOWN_EXTENSION)
     return document_format

@@ -13,6 +13,7 @@ from app.extraction.answer_key import (
 )
 from app.extraction.schema import ExtractedQuestionnaire
 from app.extraction.service import QuestionnaireExtractor
+from app.extraction.warnings import WarningCode
 from app.llm.client import Completion, ImagePart, Message, TextPart
 from app.llm.errors import FailureKind, ModelCallError
 from app.llm.structured import StructuredRunner
@@ -203,8 +204,10 @@ async def test_items_the_key_does_not_answer_are_reported() -> None:
 
     assert fill.questionnaire.items[0].correct_answer == ["A"]
     assert fill.questionnaire.items[1].correct_answer is None
-    assert len(fill.warnings) == 1
-    assert "items 2 still have no correct answer" in fill.warnings[0]
+    (warning,) = fill.warnings
+    assert warning.code is WarningCode.ANSWERS_NOT_IN_KEY
+    assert warning.items == (2,)
+    assert warning.pages == (3,)
 
 
 async def test_an_answer_for_an_item_not_listed_keeps_the_questionnaire_unchanged() -> None:
@@ -216,7 +219,7 @@ async def test_an_answer_for_an_item_not_listed_keeps_the_questionnaire_unchange
     fill = await fill_from_answer_key(_runner(backend), KEY_DOCUMENT, questionnaire, "flash")
 
     assert fill.questionnaire == questionnaire
-    assert "could not be read" in fill.warnings[0]
+    assert fill.warnings[0].code is WarningCode.ANSWER_KEY_UNREAD
 
 
 async def test_an_answer_that_is_not_an_alternative_keeps_the_questionnaire_unchanged() -> None:
@@ -243,7 +246,9 @@ async def test_a_failing_model_keeps_the_questionnaire_with_a_warning() -> None:
 
     assert fill.questionnaire == questionnaire
     assert fill.result is None
-    assert "items 1 have no correct answer" in fill.warnings[0]
+    (warning,) = fill.warnings
+    assert warning.code is WarningCode.ANSWER_KEY_UNREAD
+    assert warning.items == (1,)
 
 
 def _service_reply(messages: Sequence[Message]) -> Completion:

@@ -47,8 +47,52 @@ DEFAULT_MESSAGES: dict[ErrorCode, str] = {
 }
 
 
+class ErrorReason(StrEnum):
+    """Why an error happened, when one code covers several situations that need different
+    actions from the user (wait, retry, choose another model, change the file...).
+
+    Stable like the codes: clients choose what to tell the user from them.
+    """
+
+    FILE_SIZE = "file_size"
+    UNCOMPRESSED_SIZE = "uncompressed_size"
+    TOO_MANY_PAGES = "too_many_pages"
+    TOO_MANY_SHEETS = "too_many_sheets"
+    SHEET_TOO_LARGE = "sheet_too_large"
+    LEGACY_FORMAT = "legacy_format"
+    MACROS = "macros"
+    UNKNOWN_EXTENSION = "unknown_extension"
+    EXTENSION_MISMATCH = "extension_mismatch"
+    NOT_A_DOCUMENT = "not_a_document"
+    DAMAGED = "damaged"
+    CONVERSION_FAILED = "conversion_failed"
+    MODEL_NOT_RESPONDING = "model_not_responding"
+    QUOTA_EXHAUSTED = "quota_exhausted"
+    MODEL_PAUSED = "model_paused"
+    MODEL_MISCONFIGURED = "model_misconfigured"
+    MODEL_REFUSED = "model_refused"
+    OUTPUT_TOO_LONG = "output_too_long"
+    INVALID_OUTPUT = "invalid_output"
+    UNKNOWN_MODEL = "unknown_model"
+    MODEL_WITHOUT_KEY = "model_without_key"
+    DOCUMENT_TOO_LONG_FOR_MODEL = "document_too_long_for_model"
+    MODEL_CANNOT_READ_IMAGES = "model_cannot_read_images"
+    INVALID_FIELDS = "invalid_fields"
+    PER_MINUTE_LIMIT = "per_minute_limit"
+    DAILY_LIMIT = "daily_limit"
+    MISSING_KEY = "missing_key"
+    INVALID_KEY = "invalid_key"
+
+
+type ErrorDetails = dict[str, int | str]
+
+
 class AppError(Exception):
-    """An expected failure with a stable code and a message that is safe to show to clients."""
+    """An expected failure with a stable code and a message that is safe to show to clients.
+
+    `reason` and `details` (limits, counts, the model id) let clients tell the user exactly what
+    to do; `retry_after_s` says when trying again can work.
+    """
 
     def __init__(
         self,
@@ -56,8 +100,12 @@ class AppError(Exception):
         message: str | None = None,
         *,
         retry_after_s: int | None = None,
+        reason: ErrorReason | None = None,
+        details: ErrorDetails | None = None,
     ) -> None:
         self.code = code
         self.message = message or DEFAULT_MESSAGES[code]
         self.retry_after_s = retry_after_s
+        self.reason = reason
+        self.details: ErrorDetails = dict(details or {})
         super().__init__(f"{code}: {self.message}")

@@ -4,11 +4,12 @@ File size limit, maximum uncompressed size of DOCX/XLSX archives (zip bombs), an
 macro-enabled and legacy Office formats.
 """
 
+import math
 from io import BytesIO
 from pathlib import PurePath
 from zipfile import BadZipFile, ZipFile
 
-from app.core.errors import AppError, ErrorCode
+from app.core.errors import AppError, ErrorCode, ErrorReason
 
 BYTES_PER_MB = 1024 * 1024
 
@@ -24,17 +25,33 @@ def check_size(data: bytes, max_size_mb: int) -> None:
         raise AppError(ErrorCode.EMPTY_FILE)
     if len(data) > max_size_mb * BYTES_PER_MB:
         message = f"The file exceeds the maximum size of {max_size_mb} MB."
-        raise AppError(ErrorCode.FILE_TOO_LARGE, message)
+        actual_mb = math.ceil(len(data) / BYTES_PER_MB)
+        raise AppError(
+            ErrorCode.FILE_TOO_LARGE,
+            message,
+            reason=ErrorReason.FILE_SIZE,
+            details={"limit_mb": max_size_mb, "actual_mb": actual_mb},
+        )
 
 
 def check_extension(filename: str) -> None:
     suffix = PurePath(filename).suffix.lower()
     if suffix in LEGACY_EXTENSIONS:
         message = f"Legacy {suffix} files are not supported. Save the file as .docx or .xlsx."
-        raise AppError(ErrorCode.UNSUPPORTED_FORMAT, message)
+        raise AppError(
+            ErrorCode.UNSUPPORTED_FORMAT,
+            message,
+            reason=ErrorReason.LEGACY_FORMAT,
+            details={"extension": suffix},
+        )
     if suffix in MACRO_EXTENSIONS:
         message = f"Macro-enabled {suffix} files are not supported. Save it without macros."
-        raise AppError(ErrorCode.UNSUPPORTED_FORMAT, message)
+        raise AppError(
+            ErrorCode.UNSUPPORTED_FORMAT,
+            message,
+            reason=ErrorReason.MACROS,
+            details={"extension": suffix},
+        )
 
 
 def check_not_ole_container(data: bytes) -> None:
@@ -48,7 +65,7 @@ def check_not_ole_container(data: bytes) -> None:
     if _ENCRYPTED_PACKAGE in data:
         raise AppError(ErrorCode.PROTECTED_FILE)
     message = "Legacy Word and Excel files are not supported. Save the file as .docx or .xlsx."
-    raise AppError(ErrorCode.UNSUPPORTED_FORMAT, message)
+    raise AppError(ErrorCode.UNSUPPORTED_FORMAT, message, reason=ErrorReason.LEGACY_FORMAT)
 
 
 def check_office_archive(data: bytes, max_uncompressed_mb: int) -> None:
@@ -56,11 +73,16 @@ def check_office_archive(data: bytes, max_uncompressed_mb: int) -> None:
         with ZipFile(BytesIO(data)) as archive:
             entries = archive.infolist()
     except BadZipFile as exc:
-        raise AppError(ErrorCode.INVALID_FILE) from exc
+        raise AppError(ErrorCode.INVALID_FILE, reason=ErrorReason.DAMAGED) from exc
 
     if sum(entry.file_size for entry in entries) > max_uncompressed_mb * BYTES_PER_MB:
         message = f"The uncompressed file exceeds {max_uncompressed_mb} MB."
-        raise AppError(ErrorCode.FILE_TOO_LARGE, message)
+        raise AppError(
+            ErrorCode.FILE_TOO_LARGE,
+            message,
+            reason=ErrorReason.UNCOMPRESSED_SIZE,
+            details={"limit_mb": max_uncompressed_mb},
+        )
     if any(entry.filename.lower().endswith("vbaproject.bin") for entry in entries):
         message = "Files with macros are not supported. Save the file without macros."
-        raise AppError(ErrorCode.UNSUPPORTED_FORMAT, message)
+        raise AppError(ErrorCode.UNSUPPORTED_FORMAT, message, reason=ErrorReason.MACROS)

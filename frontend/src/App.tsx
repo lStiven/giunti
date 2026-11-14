@@ -10,7 +10,7 @@ import { ProcessingView } from "./components/ProcessingView";
 import { ResultView } from "./components/ResultView";
 import { flowReducer, initialState, modelLabel, type FlowState } from "./flow";
 import { takeKeyFromUrl } from "./invite";
-import { errorText } from "./messages";
+import { errorGuidance } from "./messages";
 import { forgetApiKey, loadApiKey, saveApiKey } from "./storage";
 
 const AUTH_ERRORS = new Set(["UNAUTHENTICATED", "FORBIDDEN"]);
@@ -150,6 +150,13 @@ function Content({ state, dispatch, onExtract, onCancel }: ContentProps): ReactE
           onStartOver={() => {
             dispatch({ type: "startOver" });
           }}
+          onChangeModel={() => {
+            dispatch({ type: "tryAnotherModel" });
+          }}
+          onReenterKey={() => {
+            forgetApiKey();
+            dispatch({ type: "keyChangeRequested" });
+          }}
         />
       ) : (
         <></>
@@ -186,7 +193,7 @@ function SetupForm({ state, dispatch, onExtract }: Omit<ContentProps, "onCancel"
 
       {state.stage === "unavailable" && state.error && (
         <ServiceProblem
-          code={state.error.code}
+          error={state.error}
           onRetry={() => {
             dispatch({ type: "catalogRetried" });
           }}
@@ -251,8 +258,14 @@ function Step({
   );
 }
 
-function ServiceProblem({ code, onRetry }: { code: string; onRetry: () => void }): ReactElement {
-  const text = errorText(code);
+function ServiceProblem({
+  error,
+  onRetry,
+}: {
+  error: ApiRequestError;
+  onRetry: () => void;
+}): ReactElement {
+  const text = errorGuidance(error);
   return (
     <div className="notice notice--error" role="alert">
       <span className="notice__icon">

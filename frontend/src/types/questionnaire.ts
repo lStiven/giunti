@@ -43,8 +43,20 @@ export interface RunInfo {
   inputTokens: number;
   outputTokens: number;
   parts: number;
+  /** The warnings' English messages, as sent by the API. */
   warnings: string[];
+  /** The same warnings with their code and the items or pages they refer to. */
+  notices: ExtractionNotice[];
   dailyRemaining: number | null;
+}
+
+/** A warning of a successful extraction (header `X-Extraction-Warnings`). */
+export interface ExtractionNotice {
+  /** Stable code (`scanned_pages`, `statement_not_found`...); "unknown" for plain-text warnings. */
+  code: string;
+  message: string;
+  items: number[];
+  pages: number[];
 }
 
 export interface ExtractionResult {

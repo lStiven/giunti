@@ -17,6 +17,7 @@ from rapidfuzz import fuzz
 
 from app.documents.models import DocumentPage, DocumentWarning, ExtractedDocument, PageSource
 from app.extraction.schema import ExtractedItem, ExtractedQuestionnaire, ItemType
+from app.extraction.warnings import ExtractionWarning, WarningCode, listed
 
 MIN_SIMILARITY = 85.0
 MIN_CHECKED_LENGTH = 4
@@ -75,31 +76,90 @@ def grounding_review(
 
 def document_warnings(
     document: ExtractedDocument, questionnaire: ExtractedQuestionnaire
-) -> list[str]:
+) -> list[ExtractionWarning]:
     """Warnings about what could not be verified, independent of the model's answer."""
-    warnings: list[str] = []
+    warnings: list[ExtractionWarning] = []
     pages_with_items = {item.page for item in questionnaire.items}
-    unverifiable = [
+    unverifiable = tuple(
         page.number
         for page in document.pages
         if page.source is PageSource.IMAGE_ONLY and page.number in pages_with_items
-    ]
+    )
     if unverifiable:
-        listed = ", ".join(map(str, unverifiable))
-        warnings.append(
-            f"Pages {listed} have no text layer (scanned): their items were read from the image "
-            "and could not be checked against the text."
+        message = (
+            f"Pages {listed(unverifiable)} have no text layer (scanned): their items were read "
+            "from the image and could not be checked against the text."
         )
-    sheets = [
+        items = tuple(item.number for item in questionnaire.items if item.page in unverifiable)
+        warnings.append(
+            ExtractionWarning(WarningCode.SCANNED_PAGES, message, items=items, pages=unverifiable)
+        )
+    sheets = tuple(
         page.number
         for page in document.pages
         if DocumentWarning.MISSING_FORMULA_VALUES in page.warnings
-    ]
+    )
     if sheets:
-        warnings.append(
-            f"Sheets {', '.join(map(str, sheets))} have formulas without saved values; open the "
-            "file in Excel, save it and upload it again to include them."
+        message = (
+            f"Sheets {listed(sheets)} have formulas without saved values; open the file in "
+            "Excel, save it and upload it again to include them."
         )
+        warnings.append(
+            ExtractionWarning(WarningCode.MISSING_FORMULA_VALUES, message, pages=sheets)
+        )
+    return warnings
+
+
+def review_warnings(
+    document: ExtractedDocument, questionnaire: ExtractedQuestionnaire
+) -> list[ExtractionWarning]:
+    """The grounding checks on the final questionnaire, grouped by kind, with final numbers.
+
+    The parts already got one chance to fix these issues; what is left is reported once per
+    kind so the client can point to the items (numbers are the final ones, after merging).
+    """
+    texts = {page.number: normalize(page.text) for page in document.pages if _checkable(page)}
+    all_text = " ".join(texts.values())
+    statements: list[int] = []
+    options: list[int] = []
+    answers: list[int] = []
+    for item in questionnaire.items:
+        if item.page not in texts:
+            continue
+        text = f"{texts[item.page]} {texts.get(item.page + 1, '')}"
+        if not appears_in(item.statement, text):
+            statements.append(item.number)
+        if _missing_options(item, text):
+            options.append(item.number)
+        if item.evidence and not appears_in(item.evidence, all_text):
+            answers.append(item.number)
+
+    warnings: list[ExtractionWarning] = []
+    if statements:
+        message = (
+            f"The statements of items {listed(statements)} were not found literally in the "
+            "document text (columns, figures or text inside images); check them."
+        )
+        warnings.append(
+            ExtractionWarning(WarningCode.STATEMENT_NOT_FOUND, message, items=tuple(statements))
+        )
+    if options:
+        message = (
+            f"Some options of items {listed(options)} were not found literally in the "
+            "document text; check them."
+        )
+        warnings.append(
+            ExtractionWarning(WarningCode.OPTIONS_NOT_FOUND, message, items=tuple(options))
+        )
+    if answers:
+        message = (
+            f"The correct answers of items {listed(answers)} could not be checked against the "
+            "document text (for example, an answer key drawn as an image); check them."
+        )
+        warnings.append(
+            ExtractionWarning(WarningCode.ANSWER_NOT_VERIFIED, message, items=tuple(answers))
+        )
+    warnings += missing_item_numbers(document, questionnaire)
     return warnings
 
 
@@ -114,18 +174,12 @@ def _item_issues(item: ExtractedItem, text: str, all_text: str) -> list[str]:
             f"the enunciado was not found on page {item.page}; copy it literally from the "
             "document or remove the item if it is not there."
         )
-    if item.item_type in _CHECKED_OPTION_TYPES:
-        options = [*item.alternatives, *item.premises]
-        missing = [
-            str(option.value)
-            for option in options
-            if option.text is not None and not appears_in(option.text, text)
-        ]
-        if missing:
-            issues.append(
-                f"the texto of the options {', '.join(missing)} was not found on page "
-                f"{item.page}; copy them literally."
-            )
+    missing = _missing_options(item, text)
+    if missing:
+        issues.append(
+            f"the texto of the options {', '.join(missing)} was not found on page "
+            f"{item.page}; copy them literally."
+        )
     if item.evidence and not appears_in(item.evidence, all_text):
         issues.append(
             "the evidencia was not found in the document; set respuesta_correcta and evidencia "
@@ -134,11 +188,26 @@ def _item_issues(item: ExtractedItem, text: str, all_text: str) -> list[str]:
     return issues
 
 
+def _missing_options(item: ExtractedItem, text: str) -> list[str]:
+    if item.item_type not in _CHECKED_OPTION_TYPES:
+        return []
+    options = [*item.alternatives, *item.premises]
+    return [
+        str(option.value)
+        for option in options
+        if option.text is not None and not appears_in(option.text, text)
+    ]
+
+
 def missing_item_numbers(
     document: ExtractedDocument, questionnaire: ExtractedQuestionnaire
-) -> list[str]:
-    """Item numbers of the whole document missing from the final result (after merging parts)."""
-    return _missing_numbers(questionnaire, _numbers_on(document, None))
+) -> list[ExtractionWarning]:
+    """Item numbers printed in the document that are missing from the final result."""
+    issues = _missing_numbers(questionnaire, _numbers_on(document, None))
+    numbers = _missing_number_list(questionnaire, _numbers_on(document, None))
+    if not issues:
+        return []
+    return [ExtractionWarning(WarningCode.MISSING_ITEM_NUMBERS, issues[0], items=numbers)]
 
 
 def _numbers_on(document: ExtractedDocument, page_numbers: Collection[int] | None) -> set[int]:
@@ -155,9 +224,22 @@ def _source_item_numbers(pages: Iterable[DocumentPage]) -> set[int]:
 
 
 def _missing_numbers(questionnaire: ExtractedQuestionnaire, source: set[int]) -> list[str]:
+    missing = _missing_number_list(questionnaire, source)
+    if not missing:
+        return []
+    message = (
+        f"Item numbers {listed(missing)} appear in the document but were not extracted; add "
+        "them if they are items."
+    )
+    return [message]
+
+
+def _missing_number_list(
+    questionnaire: ExtractedQuestionnaire, source: set[int]
+) -> tuple[int, ...]:
     extracted = {item.number for item in questionnaire.items}
     if not extracted or not source:
-        return []
+        return ()
     expected = set(range(min(extracted), max(extracted)))
     gaps = sorted((expected - extracted) & source)
     tail: list[int] = []
@@ -165,12 +247,4 @@ def _missing_numbers(questionnaire: ExtractedQuestionnaire, source: set[int]) ->
     while following in source:
         tail.append(following)
         following += 1
-    missing = gaps + tail
-    if not missing:
-        return []
-    listed = ", ".join(map(str, missing))
-    message = (
-        f"Item numbers {listed} appear in the document but were not extracted; add them if they "
-        "are items."
-    )
-    return [message]
+    return (*gaps, *tail)

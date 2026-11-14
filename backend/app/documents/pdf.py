@@ -19,7 +19,7 @@ from pdfplumber.page import Page
 from pdfplumber.table import Table
 from pdfplumber.utils.exceptions import PdfminerException
 
-from app.core.errors import AppError, ErrorCode
+from app.core.errors import AppError, ErrorCode, ErrorReason
 from app.documents.models import (
     DocumentFormat,
     DocumentPage,
@@ -129,15 +129,21 @@ def extract_pdf(
     try:
         with pdfplumber.open(BytesIO(data)) as pdf:
             if not pdf.pages:
-                raise AppError(ErrorCode.INVALID_FILE, "The PDF has no pages.")
+                message = "The PDF has no pages."
+                raise AppError(ErrorCode.INVALID_FILE, message, reason=ErrorReason.DAMAGED)
             if len(pdf.pages) > max_pages:
                 message = f"The document exceeds the maximum of {max_pages} pages."
-                raise AppError(ErrorCode.FILE_TOO_LARGE, message)
+                raise AppError(
+                    ErrorCode.FILE_TOO_LARGE,
+                    message,
+                    reason=ErrorReason.TOO_MANY_PAGES,
+                    details={"limit": max_pages, "actual": len(pdf.pages)},
+                )
             pages = tuple(_extract_page(page, render) for page in pdf.pages)
     except PdfminerException as exc:
         if exc.args and isinstance(exc.args[0], PDFPasswordIncorrect):
             raise AppError(ErrorCode.PROTECTED_FILE) from exc
-        raise AppError(ErrorCode.INVALID_FILE) from exc
+        raise AppError(ErrorCode.INVALID_FILE, reason=ErrorReason.DAMAGED) from exc
     return ExtractedDocument(document_format=DocumentFormat.PDF, filename=filename, pages=pages)
 
 

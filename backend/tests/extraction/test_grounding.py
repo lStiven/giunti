@@ -15,6 +15,7 @@ from app.extraction.grounding import (
     normalize,
 )
 from app.extraction.schema import ExtractedQuestionnaire
+from app.extraction.warnings import WarningCode
 
 PAGE_ONE = """\
 1. Quale e la capitale d'Italia?
@@ -174,8 +175,9 @@ def test_items_read_from_scanned_pages_produce_a_warning() -> None:
 
     warnings = document_warnings(document, questionnaire)
 
-    assert len(warnings) == 1
-    assert warnings[0].startswith("Pages 2 have no text layer")
+    (warning,) = warnings
+    assert warning.code is WarningCode.SCANNED_PAGES
+    assert warning.pages == (2,)
 
 
 def test_sheets_with_missing_formula_values_produce_a_warning() -> None:
@@ -191,7 +193,8 @@ def test_sheets_with_missing_formula_values_produce_a_warning() -> None:
 
     warnings = document_warnings(_document(page), _questionnaire(_open(1, "a")))
 
-    assert warnings[0].startswith("Sheets 1 have formulas without saved values")
+    assert warnings[0].code is WarningCode.MISSING_FORMULA_VALUES
+    assert warnings[0].pages == (1,)
 
 
 def test_review_of_a_part_only_looks_for_numbers_on_its_pages() -> None:
@@ -208,9 +211,6 @@ def test_items_lost_between_parts_are_found_in_the_whole_document() -> None:
     )
     merged = _questionnaire(_open(1, "Prima domanda"), _open(3, "Terza") | {"pagina": 3})
 
-    assert missing_item_numbers(document, merged) == [
-        (
-            "Item numbers 2 appear in the document but were not extracted; add them if they "
-            "are items."
-        )
-    ]
+    (warning,) = missing_item_numbers(document, merged)
+    assert warning.code is WarningCode.MISSING_ITEM_NUMBERS
+    assert warning.items == (2,)

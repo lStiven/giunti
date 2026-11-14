@@ -194,7 +194,8 @@ def test_invented_content_is_sent_back_and_reported_when_it_persists() -> None:
     assert response.headers["X-LLM-Repairs"] == "1"
     warnings = json.loads(response.headers["X-Extraction-Warnings"])
     assert len(warnings) == 1
-    assert "the enunciado was not found on page 1" in warnings[0]
+    assert warnings[0]["code"] == "statement_not_found"
+    assert warnings[0]["items"] == [1]
 
 
 def test_rule_breaking_answer_is_repaired() -> None:

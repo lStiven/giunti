@@ -18,6 +18,7 @@ every provider behaves the same.
 import asyncio
 import json
 import logging
+import math
 import random
 import time
 from collections.abc import Awaitable, Callable, Collection, Sequence
@@ -26,7 +27,7 @@ from dataclasses import dataclass, field
 from pydantic import BaseModel, ValidationError
 
 from app.core.config import LLMCatalog, LLMModelConfig, Settings
-from app.core.errors import AppError, ErrorCode
+from app.core.errors import AppError, ErrorCode, ErrorReason
 from app.llm.circuit_breaker import BreakerRegistry
 from app.llm.client import (
     Completion,
@@ -47,6 +48,16 @@ MAX_RETRY_WAIT_S = 60.0
 QUOTA_PAUSE_S = 15 * 60.0
 CONFIGURATION_PAUSE_S = 5 * 60.0
 MAX_REPORTED_ERRORS = 30
+
+_FAILURE_REASONS: dict[FailureKind, ErrorReason] = {
+    FailureKind.TRANSIENT: ErrorReason.MODEL_NOT_RESPONDING,
+    FailureKind.QUOTA_EXHAUSTED: ErrorReason.QUOTA_EXHAUSTED,
+    FailureKind.CONFIGURATION: ErrorReason.MODEL_MISCONFIGURED,
+    FailureKind.REFUSED: ErrorReason.MODEL_REFUSED,
+    FailureKind.TRUNCATED: ErrorReason.OUTPUT_TOO_LONG,
+    FailureKind.CONTEXT_EXCEEDED: ErrorReason.DOCUMENT_TOO_LONG_FOR_MODEL,
+    FailureKind.INVALID_OUTPUT: ErrorReason.INVALID_OUTPUT,
+}
 
 _FAILURE_ERRORS: dict[FailureKind, tuple[ErrorCode, str]] = {
     FailureKind.TRANSIENT: (
@@ -187,7 +198,12 @@ class StructuredRunner:
         messages = _messages_for(model, task.instructions, content)
         if messages is None:
             message = f"The model '{model.id}' cannot read images, and this document needs it."
-            raise AppError(ErrorCode.INVALID_REQUEST, message)
+            raise AppError(
+                ErrorCode.INVALID_REQUEST,
+                message,
+                reason=ErrorReason.MODEL_CANNOT_READ_IMAGES,
+                details={"model": model.id},
+            )
         self._check_can_take(model, messages)
 
         started = time.perf_counter()
@@ -198,7 +214,14 @@ class StructuredRunner:
             self._record_failure(model, error)
             _log_run(task.name, model.id, usage, started, outcome=error.kind, detail=error.detail)
             code, template = _FAILURE_ERRORS[error.kind]
-            raise LLMRunError(code, template.format(id=model.id), kind=error.kind) from error
+            raise LLMRunError(
+                code,
+                template.format(id=model.id),
+                kind=error.kind,
+                reason=_FAILURE_REASONS[error.kind],
+                retry_after_s=_suggested_wait(error),
+                details={"model": model.id},
+            ) from error
 
         self._breakers.get(model.id).record_success()
         _log_run(task.name, model.id, usage, started, warnings=len(warnings))
@@ -224,21 +247,35 @@ class StructuredRunner:
                 f"The model '{chosen}' is not available: its provider has no API key "
                 "configured on the server. See GET /api/v1/models for the available models."
             )
+            reason = ErrorReason.MODEL_WITHOUT_KEY
         else:
             message = f"Unknown model '{chosen}'. See GET /api/v1/models for the options."
-        raise AppError(ErrorCode.INVALID_REQUEST, message)
+            reason = ErrorReason.UNKNOWN_MODEL
+        raise AppError(ErrorCode.INVALID_REQUEST, message, reason=reason, details={"model": chosen})
 
     def _check_can_take(self, model: LLMModelConfig, messages: Sequence[Message]) -> None:
-        if not self._breakers.get(model.id).is_available():
+        breaker = self._breakers.get(model.id)
+        if not breaker.is_available():
             message = (
                 f"The model '{model.id}' is temporarily unavailable after repeated failures. "
                 "Try again later or choose another model."
             )
-            raise AppError(ErrorCode.LLM_UNAVAILABLE, message)
+            raise AppError(
+                ErrorCode.LLM_UNAVAILABLE,
+                message,
+                reason=ErrorReason.MODEL_PAUSED,
+                retry_after_s=math.ceil(breaker.seconds_until_available()),
+                details={"model": model.id},
+            )
         window = self._window_of(model)
         if window is not None and estimate_tokens(messages) > window:
             _, template = _FAILURE_ERRORS[FailureKind.CONTEXT_EXCEEDED]
-            raise AppError(ErrorCode.INVALID_REQUEST, template.format(id=model.id))
+            raise AppError(
+                ErrorCode.INVALID_REQUEST,
+                template.format(id=model.id),
+                reason=ErrorReason.DOCUMENT_TOO_LONG_FOR_MODEL,
+                details={"model": model.id},
+            )
 
     async def _run_on_model[T: BaseModel](
         self,
@@ -379,6 +416,17 @@ def _location(loc: tuple[int | str, ...]) -> str:
         else:
             path += f".{part}" if path else part
     return path or "root"
+
+
+def _suggested_wait(error: ModelCallError) -> int | None:
+    """Seconds the client should wait before trying this model again, when it is known."""
+    match error.kind:
+        case FailureKind.QUOTA_EXHAUSTED:
+            return math.ceil(max(error.retry_after_s or 0.0, QUOTA_PAUSE_S))
+        case FailureKind.TRANSIENT if error.retry_after_s is not None:
+            return math.ceil(error.retry_after_s)
+        case _:
+            return None
 
 
 def _backoff(retry: int, retry_after_s: float | None) -> float:

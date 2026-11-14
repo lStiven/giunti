@@ -19,10 +19,11 @@ from app.documents.models import ExtractedDocument
 from app.documents.registry import extract
 from app.extraction.answer_key import KeyAnswers, KeyFill, fill_from_answer_key
 from app.extraction.chunking import Chunk, merge, plan_chunks, split_chunk
-from app.extraction.grounding import document_warnings, missing_item_numbers
+from app.extraction.grounding import document_warnings, review_warnings
 from app.extraction.prompt import build_content
 from app.extraction.schema import ExtractedQuestionnaire, Questionnaire
 from app.extraction.task import questionnaire_task
+from app.extraction.warnings import ExtractionWarning
 from app.llm.errors import FailureKind, LLMRunError
 from app.llm.structured import StructuredResult, StructuredRunner
 
@@ -33,7 +34,7 @@ type PartResult = StructuredResult[ExtractedQuestionnaire]
 class ExtractionOutcome:
     questionnaire: Questionnaire
     model_id: str
-    warnings: tuple[str, ...]
+    warnings: tuple[ExtractionWarning, ...]
     parts: int
     input_tokens: int
     output_tokens: int
@@ -72,11 +73,9 @@ class QuestionnaireExtractor:
             extracted = key_fill.questionnaire
         llm_duration_ms = round((time.perf_counter() - started) * 1000)
 
+        # Checked again on the merged result so warnings use the final item numbers.
         warnings = [*document_warnings(document, extracted)]
-        warnings += [warning for result in results for warning in result.warnings]
-        if len(results) > 1:
-            # Each part checked its own pages; this catches items lost between parts.
-            warnings += missing_item_numbers(document, extracted)
+        warnings += review_warnings(document, extracted)
         warnings += key_fill.warnings
         usage: list[StructuredResult[ExtractedQuestionnaire] | StructuredResult[KeyAnswers]] = [
             *results

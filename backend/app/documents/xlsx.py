@@ -16,7 +16,7 @@ from openpyxl.utils.exceptions import InvalidFileException
 from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
-from app.core.errors import AppError, ErrorCode
+from app.core.errors import AppError, ErrorCode, ErrorReason
 from app.documents.models import (
     DocumentFormat,
     DocumentPage,
@@ -44,7 +44,12 @@ def extract_xlsx(data: bytes, filename: str, *, max_pages: int) -> ExtractedDocu
     worksheets = values.worksheets
     if len(worksheets) > max_pages:
         message = f"The workbook exceeds the maximum of {max_pages} sheets."
-        raise AppError(ErrorCode.FILE_TOO_LARGE, message)
+        raise AppError(
+            ErrorCode.FILE_TOO_LARGE,
+            message,
+            reason=ErrorReason.TOO_MANY_SHEETS,
+            details={"limit": max_pages, "actual": len(worksheets)},
+        )
 
     sheets = [_read_sheet(sheet, formulas[sheet.title]) for sheet in worksheets]
     pages = tuple(
@@ -58,13 +63,19 @@ def _load(data: bytes, *, data_only: bool) -> Workbook:
     try:
         return load_workbook(BytesIO(data), data_only=data_only, keep_links=False)
     except (InvalidFileException, BadZipFile, KeyError, ValueError, TypeError, OSError) as exc:
-        raise AppError(ErrorCode.INVALID_FILE, "The XLSX file is damaged or not valid.") from exc
+        message = "The XLSX file is damaged or not valid."
+        raise AppError(ErrorCode.INVALID_FILE, message, reason=ErrorReason.DAMAGED) from exc
 
 
 def _read_sheet(sheet: Worksheet, formula_sheet: object) -> _Sheet:
     if sheet.max_row * sheet.max_column > MAX_CELLS_PER_SHEET:
         message = f"The sheet '{sheet.title}' is too large to process."
-        raise AppError(ErrorCode.FILE_TOO_LARGE, message)
+        raise AppError(
+            ErrorCode.FILE_TOO_LARGE,
+            message,
+            reason=ErrorReason.SHEET_TOO_LARGE,
+            details={"limit_cells": MAX_CELLS_PER_SHEET},
+        )
 
     anchors = _merged_anchors(sheet)
     rows: list[list[str]] = []
