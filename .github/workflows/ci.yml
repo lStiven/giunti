@@ -20,6 +20,10 @@ jobs:
         with:
           version: ${{ env.UV_VERSION }}
       - run: uv tool install rust-just==${{ env.JUST_VERSION }}
+      - name: Install LibreOffice (DOCX conversion tests)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libreoffice-writer-nogui
       - run: just backend::setup eval::setup
       - run: just backend::check eval::check scripts-check
 

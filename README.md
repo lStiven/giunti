@@ -43,6 +43,7 @@ Cuando el enunciado admite más de una interpretación, se elige la más razonab
 | S3 | ¿Puede un archivo traer varios cuestionarios? | Cada archivo se trata como **un solo cuestionario**. Si tiene secciones, todos sus ítems van en la misma lista. | El esquema de salida tiene un solo `titulo` y una sola lista de `items`. |
 | S4 | ¿La clave de respuestas puede venir en otro archivo? | Solo se usa la información **del mismo archivo** (marcas de formato o clave incluida en él). | Con un archivo por petición no hay forma de asociar dos archivos. |
 | S5 | ¿Qué imágenes se procesan? | Solo las de **PDF y Word**, y solo para leer el texto de preguntas que vienen como imagen o para ubicar las figuras de una pregunta. Las de Excel se ignoran. | Indicación del equipo. |
+| S20 | ¿Qué hacer con las hojas ocultas de un Excel? | Se **incluyen**, marcadas como ocultas. Las hojas vacías se omiten. | A veces la clave de respuestas está en una hoja oculta; marcarla deja al modelo decidir con esa información. |
 
 ### Salida
 

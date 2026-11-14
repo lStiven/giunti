@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     max_uncompressed_mb: int = 200
 
     libreoffice_path: str = "soffice"
+    libreoffice_timeout_s: int = 120
     render_dpi: int = 150
     render_max_px: int = 1568
 
