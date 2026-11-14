@@ -1,0 +1,65 @@
+{
+  "id": "it_figure_e_abbinamento",
+  "description": "Multiple choice whose options are drawings (texto must be null, assumption S8), a two-column matching exercise with one extra distractor (premisas + pairs, assumption S7) and an open question; answers in a key table on a new page.",
+  "formats": ["docx", "pdf"],
+  "titulo": "Prova di ragionamento",
+  "idioma": "it",
+  "instructions": ["Rispondi a tutte le domande."],
+  "sections": [
+    {
+      "items": [
+        {
+          "numero": 1,
+          "enunciado": "Quale figura ha esattamente quattro lati uguali?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {"valor": "A", "texto": null, "figure": "circle"},
+            {"valor": "B", "texto": null, "figure": "triangle"},
+            {"valor": "C", "texto": null, "figure": "square"},
+            {"valor": "D", "texto": null, "figure": "star"}
+          ],
+          "respuesta_correcta": ["C"],
+          "mark": "key"
+        },
+        {
+          "numero": 2,
+          "enunciado": "Quale figura non ha linee curve né angoli chiusi?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {"valor": "A", "texto": null, "figure": "cross"},
+            {"valor": "B", "texto": null, "figure": "circle"},
+            {"valor": "C", "texto": null, "figure": "square"}
+          ],
+          "respuesta_correcta": ["A"],
+          "mark": "key"
+        },
+        {
+          "numero": 3,
+          "enunciado": "Abbina ogni strumento alla grandezza che misura.",
+          "tipo": "emparejamiento",
+          "premisas": [
+            {"valor": 1, "texto": "Termometro"},
+            {"valor": 2, "texto": "Bilancia"},
+            {"valor": 3, "texto": "Cronometro"},
+            {"valor": 4, "texto": "Metro"}
+          ],
+          "alternativas": [
+            {"valor": "a", "texto": "Tempo"},
+            {"valor": "b", "texto": "Temperatura"},
+            {"valor": "c", "texto": "Lunghezza"},
+            {"valor": "d", "texto": "Massa"},
+            {"valor": "e", "texto": "Velocità"}
+          ],
+          "respuesta_correcta": ["1-b", "2-d", "3-a", "4-c"],
+          "mark": "key"
+        },
+        {
+          "numero": 4,
+          "enunciado": "Spiega quale strategia hai usato per rispondere alla domanda 1.",
+          "tipo": "desarrollo"
+        }
+      ]
+    }
+  ],
+  "answer_key": {"heading": "Soluzioni", "style": "table", "new_page": true, "columns": ["Domanda", "Risposta"]}
+}

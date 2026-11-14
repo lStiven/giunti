@@ -1,0 +1,1648 @@
+{
+  "id": "en_answer_key_at_the_end",
+  "description": "60 multiple-choice items over several pages; the answers are only in an answer-key table that starts on a new page and spans more than one page. Checks long documents in parts and multi-page answer keys (finding H2).",
+  "formats": [
+    "docx",
+    "pdf"
+  ],
+  "titulo": "Numeracy Practice Test",
+  "idioma": "en",
+  "instructions": [
+    "Choose the correct answer for each question. Mark only one option."
+  ],
+  "sections": [
+    {
+      "items": [
+        {
+          "numero": 1,
+          "enunciado": "How much is 13 - 2?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "9"
+            },
+            {
+              "valor": "B",
+              "texto": "11"
+            },
+            {
+              "valor": "C",
+              "texto": "10"
+            },
+            {
+              "valor": "D",
+              "texto": "8"
+            }
+          ],
+          "respuesta_correcta": [
+            "B"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 2,
+          "enunciado": "How much is 33 × 2?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "66"
+            },
+            {
+              "valor": "B",
+              "texto": "54"
+            },
+            {
+              "valor": "C",
+              "texto": "64"
+            },
+            {
+              "valor": "D",
+              "texto": "56"
+            }
+          ],
+          "respuesta_correcta": [
+            "A"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 3,
+          "enunciado": "How much is 18 + 13?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "29"
+            },
+            {
+              "valor": "B",
+              "texto": "33"
+            },
+            {
+              "valor": "C",
+              "texto": "41"
+            },
+            {
+              "valor": "D",
+              "texto": "31"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 4,
+          "enunciado": "How much is 14 - 6?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "9"
+            },
+            {
+              "valor": "B",
+              "texto": "8"
+            },
+            {
+              "valor": "C",
+              "texto": "5"
+            },
+            {
+              "valor": "D",
+              "texto": "10"
+            }
+          ],
+          "respuesta_correcta": [
+            "B"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 5,
+          "enunciado": "How much is 27 × 3?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "71"
+            },
+            {
+              "valor": "B",
+              "texto": "82"
+            },
+            {
+              "valor": "C",
+              "texto": "81"
+            },
+            {
+              "valor": "D",
+              "texto": "83"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 6,
+          "enunciado": "How much is 8 + 13?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "31"
+            },
+            {
+              "valor": "B",
+              "texto": "24"
+            },
+            {
+              "valor": "C",
+              "texto": "11"
+            },
+            {
+              "valor": "D",
+              "texto": "21"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 7,
+          "enunciado": "How much is 29 - 11?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "16"
+            },
+            {
+              "valor": "B",
+              "texto": "6"
+            },
+            {
+              "valor": "C",
+              "texto": "18"
+            },
+            {
+              "valor": "D",
+              "texto": "8"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 8,
+          "enunciado": "How much is 20 × 15?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "290"
+            },
+            {
+              "valor": "B",
+              "texto": "299"
+            },
+            {
+              "valor": "C",
+              "texto": "302"
+            },
+            {
+              "valor": "D",
+              "texto": "300"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 9,
+          "enunciado": "How much is 16 + 7?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "22"
+            },
+            {
+              "valor": "B",
+              "texto": "23"
+            },
+            {
+              "valor": "C",
+              "texto": "24"
+            },
+            {
+              "valor": "D",
+              "texto": "21"
+            }
+          ],
+          "respuesta_correcta": [
+            "B"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 10,
+          "enunciado": "How much is 40 - 13?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "30"
+            },
+            {
+              "valor": "B",
+              "texto": "24"
+            },
+            {
+              "valor": "C",
+              "texto": "25"
+            },
+            {
+              "valor": "D",
+              "texto": "27"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 11,
+          "enunciado": "How much is 26 × 15?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "391"
+            },
+            {
+              "valor": "B",
+              "texto": "378"
+            },
+            {
+              "valor": "C",
+              "texto": "388"
+            },
+            {
+              "valor": "D",
+              "texto": "390"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 12,
+          "enunciado": "How much is 19 + 11?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "28"
+            },
+            {
+              "valor": "B",
+              "texto": "31"
+            },
+            {
+              "valor": "C",
+              "texto": "33"
+            },
+            {
+              "valor": "D",
+              "texto": "30"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 13,
+          "enunciado": "How much is 15 - 6?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "6"
+            },
+            {
+              "valor": "B",
+              "texto": "7"
+            },
+            {
+              "valor": "C",
+              "texto": "9"
+            },
+            {
+              "valor": "D",
+              "texto": "19"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 14,
+          "enunciado": "How much is 31 × 7?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "215"
+            },
+            {
+              "valor": "B",
+              "texto": "227"
+            },
+            {
+              "valor": "C",
+              "texto": "214"
+            },
+            {
+              "valor": "D",
+              "texto": "217"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 15,
+          "enunciado": "How much is 13 + 4?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "17"
+            },
+            {
+              "valor": "B",
+              "texto": "28"
+            },
+            {
+              "valor": "C",
+              "texto": "19"
+            },
+            {
+              "valor": "D",
+              "texto": "14"
+            }
+          ],
+          "respuesta_correcta": [
+            "A"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 16,
+          "enunciado": "How much is 35 - 10?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "25"
+            },
+            {
+              "valor": "B",
+              "texto": "24"
+            },
+            {
+              "valor": "C",
+              "texto": "35"
+            },
+            {
+              "valor": "D",
+              "texto": "13"
+            }
+          ],
+          "respuesta_correcta": [
+            "A"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 17,
+          "enunciado": "How much is 27 × 3?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "83"
+            },
+            {
+              "valor": "B",
+              "texto": "80"
+            },
+            {
+              "valor": "C",
+              "texto": "78"
+            },
+            {
+              "valor": "D",
+              "texto": "81"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 18,
+          "enunciado": "How much is 38 + 14?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "49"
+            },
+            {
+              "valor": "B",
+              "texto": "42"
+            },
+            {
+              "valor": "C",
+              "texto": "52"
+            },
+            {
+              "valor": "D",
+              "texto": "62"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 19,
+          "enunciado": "How much is 15 - 7?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "8"
+            },
+            {
+              "valor": "B",
+              "texto": "5"
+            },
+            {
+              "valor": "C",
+              "texto": "18"
+            },
+            {
+              "valor": "D",
+              "texto": "19"
+            }
+          ],
+          "respuesta_correcta": [
+            "A"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 20,
+          "enunciado": "How much is 13 × 7?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "91"
+            },
+            {
+              "valor": "B",
+              "texto": "79"
+            },
+            {
+              "valor": "C",
+              "texto": "90"
+            },
+            {
+              "valor": "D",
+              "texto": "89"
+            }
+          ],
+          "respuesta_correcta": [
+            "A"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 21,
+          "enunciado": "How much is 11 + 13?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "34"
+            },
+            {
+              "valor": "B",
+              "texto": "24"
+            },
+            {
+              "valor": "C",
+              "texto": "14"
+            },
+            {
+              "valor": "D",
+              "texto": "27"
+            }
+          ],
+          "respuesta_correcta": [
+            "B"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 22,
+          "enunciado": "How much is 16 - 6?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "10"
+            },
+            {
+              "valor": "B",
+              "texto": "12"
+            },
+            {
+              "valor": "C",
+              "texto": "21"
+            },
+            {
+              "valor": "D",
+              "texto": "20"
+            }
+          ],
+          "respuesta_correcta": [
+            "A"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 23,
+          "enunciado": "How much is 25 × 8?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "203"
+            },
+            {
+              "valor": "B",
+              "texto": "210"
+            },
+            {
+              "valor": "C",
+              "texto": "201"
+            },
+            {
+              "valor": "D",
+              "texto": "200"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 24,
+          "enunciado": "How much is 20 + 3?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "23"
+            },
+            {
+              "valor": "B",
+              "texto": "11"
+            },
+            {
+              "valor": "C",
+              "texto": "34"
+            },
+            {
+              "valor": "D",
+              "texto": "24"
+            }
+          ],
+          "respuesta_correcta": [
+            "A"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 25,
+          "enunciado": "How much is 6 - 3?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "1"
+            },
+            {
+              "valor": "B",
+              "texto": "13"
+            },
+            {
+              "valor": "C",
+              "texto": "3"
+            },
+            {
+              "valor": "D",
+              "texto": "4"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 26,
+          "enunciado": "How much is 19 × 10?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "187"
+            },
+            {
+              "valor": "B",
+              "texto": "201"
+            },
+            {
+              "valor": "C",
+              "texto": "190"
+            },
+            {
+              "valor": "D",
+              "texto": "193"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 27,
+          "enunciado": "How much is 18 + 3?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "11"
+            },
+            {
+              "valor": "B",
+              "texto": "23"
+            },
+            {
+              "valor": "C",
+              "texto": "22"
+            },
+            {
+              "valor": "D",
+              "texto": "21"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 28,
+          "enunciado": "How much is 12 - 9?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "5"
+            },
+            {
+              "valor": "B",
+              "texto": "3"
+            },
+            {
+              "valor": "C",
+              "texto": "1"
+            },
+            {
+              "valor": "D",
+              "texto": "4"
+            }
+          ],
+          "respuesta_correcta": [
+            "B"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 29,
+          "enunciado": "How much is 14 × 8?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "115"
+            },
+            {
+              "valor": "B",
+              "texto": "112"
+            },
+            {
+              "valor": "C",
+              "texto": "109"
+            },
+            {
+              "valor": "D",
+              "texto": "111"
+            }
+          ],
+          "respuesta_correcta": [
+            "B"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 30,
+          "enunciado": "How much is 12 + 2?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "24"
+            },
+            {
+              "valor": "B",
+              "texto": "14"
+            },
+            {
+              "valor": "C",
+              "texto": "2"
+            },
+            {
+              "valor": "D",
+              "texto": "4"
+            }
+          ],
+          "respuesta_correcta": [
+            "B"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 31,
+          "enunciado": "How much is 37 - 9?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "30"
+            },
+            {
+              "valor": "B",
+              "texto": "16"
+            },
+            {
+              "valor": "C",
+              "texto": "28"
+            },
+            {
+              "valor": "D",
+              "texto": "26"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 32,
+          "enunciado": "How much is 30 × 6?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "182"
+            },
+            {
+              "valor": "B",
+              "texto": "183"
+            },
+            {
+              "valor": "C",
+              "texto": "179"
+            },
+            {
+              "valor": "D",
+              "texto": "180"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 33,
+          "enunciado": "How much is 24 + 5?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "29"
+            },
+            {
+              "valor": "B",
+              "texto": "39"
+            },
+            {
+              "valor": "C",
+              "texto": "40"
+            },
+            {
+              "valor": "D",
+              "texto": "17"
+            }
+          ],
+          "respuesta_correcta": [
+            "A"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 34,
+          "enunciado": "How much is 9 - 2?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "7"
+            },
+            {
+              "valor": "B",
+              "texto": "18"
+            },
+            {
+              "valor": "C",
+              "texto": "10"
+            },
+            {
+              "valor": "D",
+              "texto": "17"
+            }
+          ],
+          "respuesta_correcta": [
+            "A"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 35,
+          "enunciado": "How much is 17 × 3?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "49"
+            },
+            {
+              "valor": "B",
+              "texto": "62"
+            },
+            {
+              "valor": "C",
+              "texto": "41"
+            },
+            {
+              "valor": "D",
+              "texto": "51"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 36,
+          "enunciado": "How much is 8 + 11?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "19"
+            },
+            {
+              "valor": "B",
+              "texto": "9"
+            },
+            {
+              "valor": "C",
+              "texto": "21"
+            },
+            {
+              "valor": "D",
+              "texto": "30"
+            }
+          ],
+          "respuesta_correcta": [
+            "A"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 37,
+          "enunciado": "How much is 26 - 5?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "18"
+            },
+            {
+              "valor": "B",
+              "texto": "21"
+            },
+            {
+              "valor": "C",
+              "texto": "20"
+            },
+            {
+              "valor": "D",
+              "texto": "23"
+            }
+          ],
+          "respuesta_correcta": [
+            "B"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 38,
+          "enunciado": "How much is 10 × 2?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "23"
+            },
+            {
+              "valor": "B",
+              "texto": "20"
+            },
+            {
+              "valor": "C",
+              "texto": "31"
+            },
+            {
+              "valor": "D",
+              "texto": "10"
+            }
+          ],
+          "respuesta_correcta": [
+            "B"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 39,
+          "enunciado": "How much is 38 + 6?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "34"
+            },
+            {
+              "valor": "B",
+              "texto": "45"
+            },
+            {
+              "valor": "C",
+              "texto": "44"
+            },
+            {
+              "valor": "D",
+              "texto": "41"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 40,
+          "enunciado": "How much is 16 - 9?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "7"
+            },
+            {
+              "valor": "B",
+              "texto": "17"
+            },
+            {
+              "valor": "C",
+              "texto": "18"
+            },
+            {
+              "valor": "D",
+              "texto": "6"
+            }
+          ],
+          "respuesta_correcta": [
+            "A"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 41,
+          "enunciado": "How much is 12 × 4?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "38"
+            },
+            {
+              "valor": "B",
+              "texto": "58"
+            },
+            {
+              "valor": "C",
+              "texto": "48"
+            },
+            {
+              "valor": "D",
+              "texto": "47"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 42,
+          "enunciado": "How much is 19 + 13?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "33"
+            },
+            {
+              "valor": "B",
+              "texto": "30"
+            },
+            {
+              "valor": "C",
+              "texto": "31"
+            },
+            {
+              "valor": "D",
+              "texto": "32"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 43,
+          "enunciado": "How much is 12 - 11?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "0"
+            },
+            {
+              "valor": "B",
+              "texto": "1"
+            },
+            {
+              "valor": "C",
+              "texto": "3"
+            },
+            {
+              "valor": "D",
+              "texto": "2"
+            }
+          ],
+          "respuesta_correcta": [
+            "B"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 44,
+          "enunciado": "How much is 16 × 13?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "211"
+            },
+            {
+              "valor": "B",
+              "texto": "218"
+            },
+            {
+              "valor": "C",
+              "texto": "208"
+            },
+            {
+              "valor": "D",
+              "texto": "210"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 45,
+          "enunciado": "How much is 15 + 10?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "36"
+            },
+            {
+              "valor": "B",
+              "texto": "13"
+            },
+            {
+              "valor": "C",
+              "texto": "25"
+            },
+            {
+              "valor": "D",
+              "texto": "26"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 46,
+          "enunciado": "How much is 8 - 6?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "3"
+            },
+            {
+              "valor": "B",
+              "texto": "0"
+            },
+            {
+              "valor": "C",
+              "texto": "12"
+            },
+            {
+              "valor": "D",
+              "texto": "2"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 47,
+          "enunciado": "How much is 21 × 15?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "303"
+            },
+            {
+              "valor": "B",
+              "texto": "315"
+            },
+            {
+              "valor": "C",
+              "texto": "317"
+            },
+            {
+              "valor": "D",
+              "texto": "312"
+            }
+          ],
+          "respuesta_correcta": [
+            "B"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 48,
+          "enunciado": "How much is 32 + 14?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "45"
+            },
+            {
+              "valor": "B",
+              "texto": "46"
+            },
+            {
+              "valor": "C",
+              "texto": "44"
+            },
+            {
+              "valor": "D",
+              "texto": "43"
+            }
+          ],
+          "respuesta_correcta": [
+            "B"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 49,
+          "enunciado": "How much is 36 - 5?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "32"
+            },
+            {
+              "valor": "B",
+              "texto": "31"
+            },
+            {
+              "valor": "C",
+              "texto": "29"
+            },
+            {
+              "valor": "D",
+              "texto": "34"
+            }
+          ],
+          "respuesta_correcta": [
+            "B"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 50,
+          "enunciado": "How much is 7 × 12?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "84"
+            },
+            {
+              "valor": "B",
+              "texto": "85"
+            },
+            {
+              "valor": "C",
+              "texto": "82"
+            },
+            {
+              "valor": "D",
+              "texto": "86"
+            }
+          ],
+          "respuesta_correcta": [
+            "A"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 51,
+          "enunciado": "How much is 28 + 12?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "50"
+            },
+            {
+              "valor": "B",
+              "texto": "42"
+            },
+            {
+              "valor": "C",
+              "texto": "40"
+            },
+            {
+              "valor": "D",
+              "texto": "41"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 52,
+          "enunciado": "How much is 17 - 11?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "5"
+            },
+            {
+              "valor": "B",
+              "texto": "8"
+            },
+            {
+              "valor": "C",
+              "texto": "6"
+            },
+            {
+              "valor": "D",
+              "texto": "17"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 53,
+          "enunciado": "How much is 33 × 11?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "373"
+            },
+            {
+              "valor": "B",
+              "texto": "353"
+            },
+            {
+              "valor": "C",
+              "texto": "363"
+            },
+            {
+              "valor": "D",
+              "texto": "365"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 54,
+          "enunciado": "How much is 33 + 2?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "45"
+            },
+            {
+              "valor": "B",
+              "texto": "36"
+            },
+            {
+              "valor": "C",
+              "texto": "33"
+            },
+            {
+              "valor": "D",
+              "texto": "35"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 55,
+          "enunciado": "How much is 26 - 12?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "4"
+            },
+            {
+              "valor": "B",
+              "texto": "13"
+            },
+            {
+              "valor": "C",
+              "texto": "14"
+            },
+            {
+              "valor": "D",
+              "texto": "24"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 56,
+          "enunciado": "How much is 26 × 8?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "205"
+            },
+            {
+              "valor": "B",
+              "texto": "218"
+            },
+            {
+              "valor": "C",
+              "texto": "208"
+            },
+            {
+              "valor": "D",
+              "texto": "207"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 57,
+          "enunciado": "How much is 17 + 11?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "28"
+            },
+            {
+              "valor": "B",
+              "texto": "39"
+            },
+            {
+              "valor": "C",
+              "texto": "30"
+            },
+            {
+              "valor": "D",
+              "texto": "27"
+            }
+          ],
+          "respuesta_correcta": [
+            "A"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 58,
+          "enunciado": "How much is 19 - 8?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "22"
+            },
+            {
+              "valor": "B",
+              "texto": "12"
+            },
+            {
+              "valor": "C",
+              "texto": "14"
+            },
+            {
+              "valor": "D",
+              "texto": "11"
+            }
+          ],
+          "respuesta_correcta": [
+            "D"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 59,
+          "enunciado": "How much is 38 × 9?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "339"
+            },
+            {
+              "valor": "B",
+              "texto": "342"
+            },
+            {
+              "valor": "C",
+              "texto": "332"
+            },
+            {
+              "valor": "D",
+              "texto": "341"
+            }
+          ],
+          "respuesta_correcta": [
+            "B"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 60,
+          "enunciado": "How much is 25 + 5?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "28"
+            },
+            {
+              "valor": "B",
+              "texto": "27"
+            },
+            {
+              "valor": "C",
+              "texto": "30"
+            },
+            {
+              "valor": "D",
+              "texto": "18"
+            }
+          ],
+          "respuesta_correcta": [
+            "C"
+          ],
+          "mark": "key"
+        }
+      ]
+    }
+  ],
+  "answer_key": {
+    "heading": "Answer key",
+    "style": "table",
+    "new_page": true,
+    "columns": [
+      "Question",
+      "Answer"
+    ]
+  }
+}

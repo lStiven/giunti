@@ -1,0 +1,29 @@
+{
+  "id": "en_survey_spreadsheet",
+  "description": "Spreadsheet only: a 1-5 Likert matrix with a merged 'Escala' header and the values shown, multiple choice with the answer in bold or with a yellow fill, true/false whose answers are only in a hidden sheet, and an open question.",
+  "formats": ["xlsx"],
+  "titulo": "Workplace wellbeing and safety survey",
+  "idioma": "en",
+  "instructions": ["Rate each statement and answer the safety questions."],
+  "sections": [
+    {
+      "heading": "Part 1 - Wellbeing",
+      "items": [
+        {"numero": 1, "enunciado": "I feel valued by my team.", "tipo": "escala_likert", "alternativas": [{"valor": 1, "texto": "Strongly disagree"}, {"valor": 2, "texto": "Disagree"}, {"valor": 3, "texto": "Neutral"}, {"valor": 4, "texto": "Agree"}, {"valor": 5, "texto": "Strongly agree"}]},
+        {"numero": 2, "enunciado": "My workload is manageable.", "tipo": "escala_likert", "alternativas": [{"valor": 1, "texto": "Strongly disagree"}, {"valor": 2, "texto": "Disagree"}, {"valor": 3, "texto": "Neutral"}, {"valor": 4, "texto": "Agree"}, {"valor": 5, "texto": "Strongly agree"}]},
+        {"numero": 3, "enunciado": "I know who to ask when I need help.", "tipo": "escala_likert", "alternativas": [{"valor": 1, "texto": "Strongly disagree"}, {"valor": 2, "texto": "Disagree"}, {"valor": 3, "texto": "Neutral"}, {"valor": 4, "texto": "Agree"}, {"valor": 5, "texto": "Strongly agree"}]}
+      ]
+    },
+    {
+      "heading": "Part 2 - Safety",
+      "items": [
+        {"numero": 4, "enunciado": "What should you do first when the fire alarm sounds?", "tipo": "seleccion_multiple", "alternativas": [{"valor": "A", "texto": "Finish your task"}, {"valor": "B", "texto": "Leave by the nearest exit"}, {"valor": "C", "texto": "Use the lift"}, {"valor": "D", "texto": "Call a colleague"}], "respuesta_correcta": ["B"], "mark": "bold"},
+        {"numero": 5, "enunciado": "Which colour are safety signs that show an emergency exit?", "tipo": "seleccion_multiple", "alternativas": [{"valor": "A", "texto": "Red"}, {"valor": "B", "texto": "Blue"}, {"valor": "C", "texto": "Green"}, {"valor": "D", "texto": "Yellow"}], "respuesta_correcta": ["C"], "mark": "highlight"},
+        {"numero": 6, "enunciado": "It is safe to block a fire door if it is only for a few minutes.", "tipo": "verdadero_falso", "alternativas": [{"valor": "T", "texto": "True"}, {"valor": "F", "texto": "False"}], "respuesta_correcta": ["F"], "mark": "key"},
+        {"numero": 7, "enunciado": "Every accident must be reported to a supervisor.", "tipo": "verdadero_falso", "alternativas": [{"valor": "T", "texto": "True"}, {"valor": "F", "texto": "False"}], "respuesta_correcta": ["T"], "mark": "key"},
+        {"numero": 8, "enunciado": "Describe one change that would make your workplace safer.", "tipo": "desarrollo"}
+      ]
+    }
+  ],
+  "answer_key": {"heading": "Answer key", "style": "table", "new_page": true, "columns": ["Item", "Answer"]}
+}

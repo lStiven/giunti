@@ -17,6 +17,7 @@ dependencies = [
 dev = [
     "ruff>=0.17",
     "mypy>=1.13",
+    "types-openpyxl>=3.1.5.20261017",
 ]
 compare = [
     "docling>=2.0",

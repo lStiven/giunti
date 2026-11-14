@@ -1,0 +1,127 @@
+{
+  "id": "es_marcas_de_respuesta",
+  "description": "Each item marks its correct answer in a different way: bold, underline, highlight, checkbox, two correct options, and one item without any answer (must stay null). Also generated as a scanned PDF to test reading marks from the image.",
+  "formats": ["docx", "pdf", "scanned"],
+  "titulo": "Prueba de Ciencias Naturales - Unidad 2",
+  "idioma": "es",
+  "instructions": ["Lea cada pregunta y marque la alternativa correcta."],
+  "sections": [
+    {
+      "heading": "I. Selección múltiple",
+      "items": [
+        {
+          "numero": 1,
+          "enunciado": "¿Qué gas absorben las plantas durante la fotosíntesis?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {"valor": "a", "texto": "Oxígeno"},
+            {"valor": "b", "texto": "Dióxido de carbono"},
+            {"valor": "c", "texto": "Nitrógeno"},
+            {"valor": "d", "texto": "Hidrógeno"}
+          ],
+          "respuesta_correcta": ["b"],
+          "mark": "bold"
+        },
+        {
+          "numero": 2,
+          "enunciado": "¿Cuál es el planeta más cercano al Sol?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {"valor": "a", "texto": "Venus"},
+            {"valor": "b", "texto": "Marte"},
+            {"valor": "c", "texto": "Mercurio"},
+            {"valor": "d", "texto": "Tierra"}
+          ],
+          "respuesta_correcta": ["c"],
+          "mark": "underline"
+        },
+        {
+          "numero": 3,
+          "enunciado": "¿Qué órgano del cuerpo humano filtra la sangre y produce orina?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {"valor": "a", "texto": "Riñón"},
+            {"valor": "b", "texto": "Hígado"},
+            {"valor": "c", "texto": "Pulmón"},
+            {"valor": "d", "texto": "Estómago"}
+          ],
+          "respuesta_correcta": ["a"],
+          "mark": "highlight"
+        },
+        {
+          "numero": 4,
+          "enunciado": "¿En qué estado se encuentra el agua a 110 °C y presión normal?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {"valor": "a", "texto": "Sólido"},
+            {"valor": "b", "texto": "Líquido"},
+            {"valor": "c", "texto": "Gaseoso"}
+          ],
+          "respuesta_correcta": ["c"],
+          "mark": "checkbox"
+        },
+        {
+          "numero": 5,
+          "enunciado": "Seleccione todas las fuentes de energía renovable.",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {"valor": "a", "texto": "Energía solar"},
+            {"valor": "b", "texto": "Carbón"},
+            {"valor": "c", "texto": "Energía eólica"},
+            {"valor": "d", "texto": "Petróleo"}
+          ],
+          "respuesta_correcta": ["a", "c"],
+          "mark": "bold"
+        },
+        {
+          "numero": 6,
+          "enunciado": "¿Cuántos huesos tiene aproximadamente el cuerpo humano adulto?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {"valor": "a", "texto": "106"},
+            {"valor": "b", "texto": "206"},
+            {"valor": "c", "texto": "306"},
+            {"valor": "d", "texto": "406"}
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "II. Verdadero o falso",
+      "items": [
+        {
+          "numero": 7,
+          "enunciado": "La Luna produce su propia luz.",
+          "tipo": "verdadero_falso",
+          "alternativas": [
+            {"valor": "V", "texto": "Verdadero"},
+            {"valor": "F", "texto": "Falso"}
+          ],
+          "respuesta_correcta": ["F"],
+          "mark": "bold"
+        },
+        {
+          "numero": 8,
+          "enunciado": "Los murciélagos son mamíferos.",
+          "tipo": "verdadero_falso",
+          "alternativas": [
+            {"valor": "V", "texto": "Verdadero"},
+            {"valor": "F", "texto": "Falso"}
+          ],
+          "respuesta_correcta": ["V"],
+          "mark": "checkbox"
+        }
+      ]
+    },
+    {
+      "heading": "III. Desarrollo",
+      "items": [
+        {
+          "numero": 9,
+          "enunciado": "Explique con sus palabras qué es el ciclo del agua.",
+          "tipo": "desarrollo"
+        }
+      ]
+    }
+  ]
+}

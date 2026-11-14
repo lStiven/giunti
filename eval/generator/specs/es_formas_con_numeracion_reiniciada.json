@@ -1,0 +1,31 @@
+{
+  "id": "es_formas_con_numeracion_reiniciada",
+  "description": "Two forms (Forma A and Forma B) that restart the numbering at 1, with one answer-key table per form on a new page. The API must number the items 1..10 (assumption S13) and still match each answer to the right form (Saber 11 Inglés case).",
+  "formats": ["docx", "pdf"],
+  "titulo": "Ensayo de Matemática - 4° básico",
+  "idioma": "es",
+  "instructions": ["Responda las dos formas. Marque una sola alternativa en cada pregunta."],
+  "sections": [
+    {
+      "heading": "Forma A",
+      "items": [
+        {"numero": 1, "shown": 1, "enunciado": "¿Cuánto es 25 + 17?", "tipo": "seleccion_multiple", "alternativas": [{"valor": "A", "texto": "32"}, {"valor": "B", "texto": "42"}, {"valor": "C", "texto": "43"}, {"valor": "D", "texto": "52"}], "respuesta_correcta": ["B"], "mark": "key"},
+        {"numero": 2, "shown": 2, "enunciado": "¿Cuántos lados tiene un pentágono?", "tipo": "seleccion_multiple", "alternativas": [{"valor": "A", "texto": "4"}, {"valor": "B", "texto": "5"}, {"valor": "C", "texto": "6"}, {"valor": "D", "texto": "8"}], "respuesta_correcta": ["B"], "mark": "key"},
+        {"numero": 3, "shown": 3, "enunciado": "¿Qué número es mayor?", "tipo": "seleccion_multiple", "alternativas": [{"valor": "A", "texto": "389"}, {"valor": "B", "texto": "398"}, {"valor": "C", "texto": "938"}, {"valor": "D", "texto": "893"}], "respuesta_correcta": ["C"], "mark": "key"},
+        {"numero": 4, "shown": 4, "enunciado": "Ana tiene 3 cajas con 6 lápices cada una. ¿Cuántos lápices tiene en total?", "tipo": "seleccion_multiple", "alternativas": [{"valor": "A", "texto": "9"}, {"valor": "B", "texto": "12"}, {"valor": "C", "texto": "18"}, {"valor": "D", "texto": "36"}], "respuesta_correcta": ["C"], "mark": "key"},
+        {"numero": 5, "shown": 5, "enunciado": "¿Cuál es la mitad de 50?", "tipo": "seleccion_multiple", "alternativas": [{"valor": "A", "texto": "20"}, {"valor": "B", "texto": "25"}, {"valor": "C", "texto": "30"}, {"valor": "D", "texto": "100"}], "respuesta_correcta": ["B"], "mark": "key"}
+      ]
+    },
+    {
+      "heading": "Forma B",
+      "items": [
+        {"numero": 6, "shown": 1, "enunciado": "¿Cuánto es 63 - 28?", "tipo": "seleccion_multiple", "alternativas": [{"valor": "A", "texto": "35"}, {"valor": "B", "texto": "45"}, {"valor": "C", "texto": "31"}, {"valor": "D", "texto": "41"}], "respuesta_correcta": ["A"], "mark": "key"},
+        {"numero": 7, "shown": 2, "enunciado": "¿Cuántos minutos tiene una hora?", "tipo": "seleccion_multiple", "alternativas": [{"valor": "A", "texto": "30"}, {"valor": "B", "texto": "50"}, {"valor": "C", "texto": "60"}, {"valor": "D", "texto": "100"}], "respuesta_correcta": ["C"], "mark": "key"},
+        {"numero": 8, "shown": 3, "enunciado": "¿Qué figura tiene tres lados?", "tipo": "seleccion_multiple", "alternativas": [{"valor": "A", "texto": "Cuadrado"}, {"valor": "B", "texto": "Círculo"}, {"valor": "C", "texto": "Rectángulo"}, {"valor": "D", "texto": "Triángulo"}], "respuesta_correcta": ["D"], "mark": "key"},
+        {"numero": 9, "shown": 4, "enunciado": "Pedro reparte 20 dulces en partes iguales entre 4 amigos. ¿Cuántos dulces recibe cada uno?", "tipo": "seleccion_multiple", "alternativas": [{"valor": "A", "texto": "4"}, {"valor": "B", "texto": "5"}, {"valor": "C", "texto": "16"}, {"valor": "D", "texto": "24"}], "respuesta_correcta": ["B"], "mark": "key"},
+        {"numero": 10, "shown": 5, "enunciado": "¿Cuál es el doble de 15?", "tipo": "seleccion_multiple", "alternativas": [{"valor": "A", "texto": "17"}, {"valor": "B", "texto": "25"}, {"valor": "C", "texto": "30"}, {"valor": "D", "texto": "45"}], "respuesta_correcta": ["C"], "mark": "key"}
+      ]
+    }
+  ],
+  "answer_key": {"heading": "Clave de respuestas", "style": "table", "new_page": true, "columns": ["Pregunta", "Respuesta"], "by_section": true}
+}

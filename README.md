@@ -36,21 +36,19 @@ just up                                # todo junto con docker compose → http:
 |---|---|
 | `GET /api/v1/models` | Modelos disponibles agrupados por proveedor, con su descripción y el modelo por defecto. Solo aparecen los modelos cuyo proveedor tiene API key configurada. |
 | `POST /api/v1/questionnaires` | Recibe un archivo (`file`, multipart) y opcionalmente el modelo (`model`, un `id` de `GET /models`). Devuelve el JSON del cuestionario. Consume una unidad de la cuota diaria del cliente. |
+| `/api/v1/admin/clients` | Panel de administración: listar, crear (`POST`), editar (`PATCH /{id}`: nombre, límites, activar/desactivar) y reemplazar la clave (`POST /{id}/key`). Solo con clave de administrador. |
 | `GET /health` | Estado del servicio (sin autenticación). |
 
-Ambos endpoints de `/api/v1` exigen la API key del cliente en el header `X-API-Key`:
+Los endpoints de `/api/v1` exigen una API key en el header `X-API-Key`:
 
 ```bash
-just backend::create-key acme 100 10      # cliente, límite diario, límite por minuto
-# → imprime la key (una sola vez) y la entrada JSON para agregar a API_KEYS en backend/.env
-
-curl -H "X-API-Key: gk_acme_..." -F file=@cuestionario.pdf -F model=gemini-flash \
+curl -H "X-API-Key: gk_colegio_..." -F file=@cuestionario.pdf -F model=gemini-flash \
   http://localhost:8080/api/v1/questionnaires
 ```
 
 La respuesta del `POST` incluye headers con datos de la ejecución: `X-LLM-Model`, `X-LLM-Input-Tokens`, `X-LLM-Output-Tokens`, `X-LLM-Repairs`, `X-LLM-Duration-Ms`, `X-Extraction-Parts` (en cuántas partes se procesó un documento largo), `X-Extraction-Warnings` (lista JSON de advertencias: contenido que no se pudo verificar contra el documento, páginas escaneadas, etc.) y `X-RateLimit-Remaining-Day`. Los errores siguen el formato `{"error": {"code", "message", "request_id"}}`; al superar un límite se responde `429 RATE_LIMITED` con `Retry-After`.
 
-Los modelos se configuran en [backend/llm_catalog.toml](backend/llm_catalog.toml) y las API keys en `backend/.env` (`GEMINI_API_KEY`, `LLM_API_KEYS`).
+Los modelos se configuran en [backend/llm_catalog.toml](backend/llm_catalog.toml) y las API keys de los proveedores de LLM en `backend/.env` (`GEMINI_API_KEY`, `LLM_API_KEYS`).
 
 ## Frontend
 
@@ -63,6 +61,18 @@ just frontend::check   # formato, lint (incluida accesibilidad), tipos, tests, b
 ```
 
 Variables (`frontend/.env.example`): `VITE_API_URL` (vacía = mismo origen) y `VITE_MAX_FILE_MB` (igual a `MAX_FILE_SIZE_MB` del backend). Si el frontend se publica en otro dominio, agregarlo a `CORS_ORIGINS` del backend.
+
+## Accesos: administradores y clientes
+
+Los clientes nunca generan ni escriben claves: reciben un **enlace de invitación** (`https://…/#clave=gk_…`) y con un clic quedan dentro. La clave viaja después del `#`, que el navegador no envía al servidor, y se borra de la barra de direcciones al leerla.
+
+1. **Una sola vez, al instalar:** generar `API_KEY_PEPPER` en `backend/.env` (`python3 -c "import secrets; print(secrets.token_urlsafe(48))"`) y crear el primer administrador:
+   ```bash
+   just backend::create-admin            # imprime el enlace al panel: http://…/admin#clave=…
+   ```
+2. **Desde entonces, todo en el panel `/admin`:** crear un cliente (nombre y límites) entrega su enlace de invitación para enviarlo por correo o mensaje. Ahí también se desactiva un cliente, se cambian sus límites o se genera una invitación nueva (la anterior deja de funcionar).
+
+Las claves se guardan en una base de datos (solo su hash HMAC): un archivo SQLite en `backend/data/` por defecto, un volumen en docker-compose, o un Postgres vía `DATABASE_URL`. `PUBLIC_APP_URL` es la dirección del frontend que va en los enlaces. Los administradores solo se crean con el comando, nunca desde la web.
 
 ## Supuestos
 

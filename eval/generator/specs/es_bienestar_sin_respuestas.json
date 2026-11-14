@@ -1,0 +1,24 @@
+{
+  "id": "es_bienestar_sin_respuestas",
+  "description": "Psychological questionnaire with a 5-point Likert table (Nunca..Siempre, values 0-4) and two open questions: no item has a correct answer, so every respuesta_correcta must be null. Also scanned.",
+  "formats": ["docx", "pdf", "scanned"],
+  "titulo": "Cuestionario de bienestar emocional",
+  "idioma": "es",
+  "instructions": ["Indique con qué frecuencia le ocurrió cada situación durante el último mes. No hay respuestas correctas ni incorrectas."],
+  "sections": [
+    {
+      "items": [
+        {"numero": 1, "enunciado": "Me sentí con energía al comenzar el día.", "tipo": "escala_likert", "alternativas": [{"valor": 0, "texto": "Nunca"}, {"valor": 1, "texto": "Casi nunca"}, {"valor": 2, "texto": "A veces"}, {"valor": 3, "texto": "Casi siempre"}, {"valor": 4, "texto": "Siempre"}]},
+        {"numero": 2, "enunciado": "Me costó concentrarme en mis tareas.", "tipo": "escala_likert", "alternativas": [{"valor": 0, "texto": "Nunca"}, {"valor": 1, "texto": "Casi nunca"}, {"valor": 2, "texto": "A veces"}, {"valor": 3, "texto": "Casi siempre"}, {"valor": 4, "texto": "Siempre"}]},
+        {"numero": 3, "enunciado": "Disfruté de actividades con amigos o familia.", "tipo": "escala_likert", "alternativas": [{"valor": 0, "texto": "Nunca"}, {"valor": 1, "texto": "Casi nunca"}, {"valor": 2, "texto": "A veces"}, {"valor": 3, "texto": "Casi siempre"}, {"valor": 4, "texto": "Siempre"}]},
+        {"numero": 4, "enunciado": "Me sentí preocupado sin un motivo claro.", "tipo": "escala_likert", "alternativas": [{"valor": 0, "texto": "Nunca"}, {"valor": 1, "texto": "Casi nunca"}, {"valor": 2, "texto": "A veces"}, {"valor": 3, "texto": "Casi siempre"}, {"valor": 4, "texto": "Siempre"}]},
+        {"numero": 5, "enunciado": "Dormí lo suficiente para descansar.", "tipo": "escala_likert", "alternativas": [{"valor": 0, "texto": "Nunca"}, {"valor": 1, "texto": "Casi nunca"}, {"valor": 2, "texto": "A veces"}, {"valor": 3, "texto": "Casi siempre"}, {"valor": 4, "texto": "Siempre"}]},
+        {"numero": 6, "enunciado": "Sentí que podía manejar los problemas que se presentaban.", "tipo": "escala_likert", "alternativas": [{"valor": 0, "texto": "Nunca"}, {"valor": 1, "texto": "Casi nunca"}, {"valor": 2, "texto": "A veces"}, {"valor": 3, "texto": "Casi siempre"}, {"valor": 4, "texto": "Siempre"}]},
+        {"numero": 7, "enunciado": "Me irrité con facilidad.", "tipo": "escala_likert", "alternativas": [{"valor": 0, "texto": "Nunca"}, {"valor": 1, "texto": "Casi nunca"}, {"valor": 2, "texto": "A veces"}, {"valor": 3, "texto": "Casi siempre"}, {"valor": 4, "texto": "Siempre"}]},
+        {"numero": 8, "enunciado": "Tuve tiempo para hacer algo que me gusta.", "tipo": "escala_likert", "alternativas": [{"valor": 0, "texto": "Nunca"}, {"valor": 1, "texto": "Casi nunca"}, {"valor": 2, "texto": "A veces"}, {"valor": 3, "texto": "Casi siempre"}, {"valor": 4, "texto": "Siempre"}]},
+        {"numero": 9, "enunciado": "Describa una situación del último mes que le haya generado tranquilidad.", "tipo": "desarrollo"},
+        {"numero": 10, "enunciado": "¿Qué cambiaría de su rutina para sentirse mejor?", "tipo": "desarrollo"}
+      ]
+    }
+  ]
+}

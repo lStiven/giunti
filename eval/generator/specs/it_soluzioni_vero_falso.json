@@ -1,0 +1,71 @@
+{
+  "id": "it_soluzioni_vero_falso",
+  "description": "True/false and multiple choice in Italian with the answers only in an inline list ('Soluzioni: 1-V, 2-F, ...') on the same page.",
+  "formats": ["docx", "pdf"],
+  "titulo": "Verifica di storia - Il Rinascimento",
+  "idioma": "it",
+  "instructions": ["Indica se le affermazioni sono vere o false e scegli la risposta corretta."],
+  "sections": [
+    {
+      "heading": "Vero o falso",
+      "items": [
+        {
+          "numero": 1,
+          "enunciado": "Il Rinascimento nacque in Italia.",
+          "tipo": "verdadero_falso",
+          "alternativas": [{"valor": "V", "texto": "Vero"}, {"valor": "F", "texto": "Falso"}],
+          "respuesta_correcta": ["V"],
+          "mark": "key"
+        },
+        {
+          "numero": 2,
+          "enunciado": "Leonardo da Vinci dipinse la Cappella Sistina.",
+          "tipo": "verdadero_falso",
+          "alternativas": [{"valor": "V", "texto": "Vero"}, {"valor": "F", "texto": "Falso"}],
+          "respuesta_correcta": ["F"],
+          "mark": "key"
+        },
+        {
+          "numero": 3,
+          "enunciado": "La stampa a caratteri mobili favorì la diffusione dei libri.",
+          "tipo": "verdadero_falso",
+          "alternativas": [{"valor": "V", "texto": "Vero"}, {"valor": "F", "texto": "Falso"}],
+          "respuesta_correcta": ["V"],
+          "mark": "key"
+        }
+      ]
+    },
+    {
+      "heading": "Scelta multipla",
+      "items": [
+        {
+          "numero": 4,
+          "enunciado": "In quale città lavorò a lungo la famiglia de' Medici come mecenate?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {"valor": "A", "texto": "Venezia"},
+            {"valor": "B", "texto": "Firenze"},
+            {"valor": "C", "texto": "Napoli"},
+            {"valor": "D", "texto": "Milano"}
+          ],
+          "respuesta_correcta": ["B"],
+          "mark": "key"
+        },
+        {
+          "numero": 5,
+          "enunciado": "Quale di questi artisti scolpì il David conservato a Firenze?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {"valor": "A", "texto": "Michelangelo"},
+            {"valor": "B", "texto": "Raffaello"},
+            {"valor": "C", "texto": "Botticelli"},
+            {"valor": "D", "texto": "Giotto"}
+          ],
+          "respuesta_correcta": ["A"],
+          "mark": "key"
+        }
+      ]
+    }
+  ],
+  "answer_key": {"heading": "Soluzioni", "style": "inline", "new_page": false}
+}

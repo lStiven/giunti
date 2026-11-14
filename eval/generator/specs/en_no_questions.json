@@ -1,0 +1,15 @@
+{
+  "id": "en_no_questions",
+  "description": "A meeting memo with numbered paragraphs but no questions: the API must answer 422 NO_ITEMS instead of inventing items from the numbered list.",
+  "formats": ["docx", "pdf"],
+  "titulo": "Minutes of the October team meeting",
+  "idioma": "en",
+  "instructions": [
+    "1. The team reviewed the progress of the reading project and agreed to keep the current schedule.",
+    "2. The budget for printed materials stays within the approved amount.",
+    "3. The next meeting will take place on the first Monday of November at 10:00.",
+    "4. Every coordinator will send a short summary of their area one week before the meeting."
+  ],
+  "sections": [],
+  "expected_error": "NO_ITEMS"
+}

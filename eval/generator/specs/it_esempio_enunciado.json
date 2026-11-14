@@ -1,0 +1,53 @@
+{
+  "id": "it_esempio_enunciado",
+  "description": "The example of the problem statement (Likert, multiple choice with the answer in bold, open question) plus one more Likert item. Generated as DOCX, PDF and XLSX to compare the three formats with the same content.",
+  "formats": ["docx", "pdf", "xlsx"],
+  "titulo": "Questionario di esempio",
+  "idioma": "it",
+  "instructions": ["Per ogni affermazione indichi con quale frequenza le accade."],
+  "sections": [
+    {
+      "items": [
+        {
+          "numero": 1,
+          "enunciado": "Mi preoccupo eccessivamente per cose di poca importanza.",
+          "tipo": "escala_likert",
+          "alternativas": [
+            {"valor": 0, "texto": "Mai"},
+            {"valor": 1, "texto": "A volte"},
+            {"valor": 2, "texto": "Spesso"},
+            {"valor": 3, "texto": "Sempre"}
+          ]
+        },
+        {
+          "numero": 2,
+          "enunciado": "Faccio fatica a rilassarmi dopo una giornata di lavoro.",
+          "tipo": "escala_likert",
+          "alternativas": [
+            {"valor": 0, "texto": "Mai"},
+            {"valor": 1, "texto": "A volte"},
+            {"valor": 2, "texto": "Spesso"},
+            {"valor": 3, "texto": "Sempre"}
+          ]
+        },
+        {
+          "numero": 3,
+          "enunciado": "Quale numero completa la serie: 2, 4, 8, 16, ...?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {"valor": "A", "texto": "18"},
+            {"valor": "B", "texto": "24"},
+            {"valor": "C", "texto": "32"}
+          ],
+          "respuesta_correcta": ["C"],
+          "mark": "bold"
+        },
+        {
+          "numero": 4,
+          "enunciado": "Descriva una situazione recente in cui si è sentito sotto pressione.",
+          "tipo": "desarrollo"
+        }
+      ]
+    }
+  ]
+}
