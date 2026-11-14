@@ -58,6 +58,7 @@ Cada proyecto (`backend/`, `frontend/`, `eval/`) tiene su propio `justfile` y fu
 | `just backend::dev` / `just frontend::dev` | Servidores de desarrollo (8080 / 5173) |
 | `just backend::create-admin` | Crea un administrador e imprime su enlace |
 | `just backend::create-key "Nombre" [diario] [por_minuto]` | Crea un cliente desde la terminal (el panel hace lo mismo) |
+| `just backend::delete-key <id>` | Elimina un cliente o un administrador y su clave (no se puede deshacer) |
 | `just fmt` / `just fix` | Formatea / aplica todas las correcciones automáticas |
 | `just check` | **Todos los controles de todos los proyectos** |
 | `just backend::check`, `just frontend::check`, `just eval::check` | Los controles de un proyecto |

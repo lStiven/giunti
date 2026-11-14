@@ -57,7 +57,7 @@ def create_app() -> FastAPI:
         app.add_middleware(
             CORSMiddleware,
             allow_origins=settings.cors_origins,
-            allow_methods=["GET", "POST", "PATCH"],
+            allow_methods=["GET", "POST", "PATCH", "DELETE"],
             allow_headers=[API_KEY_HEADER, REQUEST_ID_HEADER, "Content-Type"],
             expose_headers=EXPOSED_HEADERS,
             max_age=600,

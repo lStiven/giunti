@@ -10,6 +10,7 @@ endpoints that call a model, which is what costs money. `require_admin` guards t
 
 import logging
 from dataclasses import dataclass
+from datetime import date
 from functools import lru_cache
 from typing import Annotated
 
@@ -19,7 +20,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.keys import client_id_of, hash_key, key_matches
 from app.auth.rate_limit import Quota, RateLimiter
-from app.auth.store import ClientRepository
+from app.auth.store import ClientRepository, UsageRepository
 from app.core.config import Settings, get_settings
 from app.core.database import get_session
 from app.core.errors import AppError, ErrorCode, ErrorReason
@@ -46,10 +47,35 @@ def get_client_repository(session: Annotated[Session, Depends(get_session)]) -> 
     return ClientRepository(session)
 
 
+def get_usage_repository(session: Annotated[Session, Depends(get_session)]) -> UsageRepository:
+    return UsageRepository(session)
+
+
+@dataclass(frozen=True, slots=True)
+class TodayUsage:
+    """Extractions per client on the current UTC day, for the admin panel."""
+
+    usage: UsageRepository
+    day: date
+
+    def of(self, client_id: str) -> int:
+        return self.usage.count(client_id, self.day)
+
+    def by_client(self) -> dict[str, int]:
+        return self.usage.counts_on(self.day)
+
+
 @lru_cache
 def get_rate_limiter() -> RateLimiter:
     """One limiter per process, shared by every request."""
     return RateLimiter()
+
+
+def get_today_usage(
+    limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
+    usage: Annotated[UsageRepository, Depends(get_usage_repository)],
+) -> TodayUsage:
+    return TodayUsage(usage, limiter.today())
 
 
 def require_client(
@@ -104,8 +130,9 @@ def require_extraction_quota(
     client: Annotated[AuthenticatedClient, Depends(require_client)],
     limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
     clients: Annotated[ClientRepository, Depends(get_client_repository)],
+    usage: Annotated[UsageRepository, Depends(get_usage_repository)],
 ) -> AuthenticatedClient:
-    status = limiter.consume(client.id, client.quota)
+    status = limiter.consume(client.id, client.quota, usage)
     clients.mark_used(client.id)
     response.headers["X-RateLimit-Limit-Day"] = str(status.daily_limit)
     response.headers["X-RateLimit-Remaining-Day"] = str(status.daily_remaining)

@@ -23,7 +23,7 @@ flowchart TB
         X --> L["llm<br/>un modelo por petición"]
         D -. "DOCX → PDF" .-> LO["LibreOffice"]
     end
-    A --- DB[("SQLite o Postgres<br/>clientes y hashes de claves")]
+    A --- DB[("SQLite o Postgres<br/>clientes, hashes de claves<br/>y uso diario")]
     L --> P["Gemini · OpenAI · DeepSeek<br/>vía LiteLLM"]
 ```
 
@@ -187,7 +187,7 @@ flowchart LR
 - **Claves:** `gk_<cliente>_<secreto aleatorio de 32 bytes>`. El servidor guarda solo su HMAC; ni el administrador puede volver a verla.
 - **Errores indistinguibles:** una clave ausente, mal formada, desconocida o incorrecta produce el mismo error y tarda lo mismo, para que no se puedan adivinar clientes.
 - **Invitación:** el enlace lleva la clave después del `#` (`…/#clave=gk_…`). Esa parte nunca llega al servidor ni a sus logs, y la página la borra de la barra de direcciones al leerla.
-- **Límites:** por minuto (ventana deslizante) y por día (día UTC), en memoria. Se reinician si el backend se reinicia.
+- **Límites:** por minuto (ventana deslizante, en memoria) y por día (día UTC, en la base de datos, así que se respetan aunque el backend se reinicie o se apague por falta de uso).
 - **Datos:** los documentos no se guardan, y los logs nunca registran su contenido ni las API keys.
 - **Modo producción:** con `APP_ENV=production`, que Docker Compose fija siempre, el backend no arranca con un `API_KEY_PEPPER` de ejemplo o corto.
 - **Web:** nginx envía una política de seguridad de contenido (CSP) estricta y cabeceras de seguridad.

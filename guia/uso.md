@@ -6,7 +6,7 @@ Hay dos tipos de acceso, y los dos entran con un **enlace de invitación** en ve
 
 | Rol | Entra en | Puede |
 |---|---|---|
-| **Administrador** | `/admin` | Crear clientes, enviarles su invitación, fijar sus límites, desactivarlos y reactivarlos |
+| **Administrador** | `/admin` | Crear clientes, enviarles su invitación, fijar sus límites, desactivarlos, reactivarlos y eliminarlos |
 | **Cliente** | `/` | Extraer cuestionarios desde la página o por API, dentro de sus límites |
 
 ## Cómo llega un cliente al servicio
@@ -30,7 +30,12 @@ sequenceDiagram
 
 ## Panel de administración
 
-El primer administrador se crea desde la terminal; el comando está en la [instalación](instalacion.md#6-crea-el-administrador). Los administradores nunca se crean desde la web.
+El primer administrador se crea desde la terminal; el comando está en la [instalación](instalacion.md#6-crea-el-administrador). Los administradores nunca se crean ni se eliminan desde la web. Para eliminar uno (por ejemplo, el de un enlace perdido), usa el comando de la terminal con su id:
+
+```bash
+docker compose exec backend python -m app.auth.delete_client administracion   # con Docker Compose
+just backend::delete-key administracion                                        # en desarrollo
+```
 
 **Crear un cliente**
 
@@ -47,6 +52,7 @@ El primer administrador se crea desde la terminal; el comando está en la [insta
 | **Editar límites** | Cambia las extracciones permitidas por día y por minuto. Aplica de inmediato |
 | **Desactivar** / **Activar** | Bloquea o devuelve el acceso sin borrar al cliente |
 | **Nueva invitación** | Genera otra clave y otro enlace. **El anterior deja de funcionar** al instante |
+| **Eliminar** | Borra el cliente, su clave y su historial de uso. Su enlace deja de funcionar al instante y **no se puede deshacer** |
 
 Los contadores diarios se reinician a las 00:00 UTC. Cada extracción solicitada cuenta, incluso si falla, porque protege el gasto en modelos.
 
@@ -84,7 +90,7 @@ curl -H "X-API-Key: gk_colegio-san-jose_…" \
 |---|---|
 | `GET /api/v1/models` | Modelos disponibles agrupados por proveedor, con su descripción y el modelo por defecto. Solo aparecen los modelos cuyo proveedor tiene API key configurada. No consume cuota. |
 | `POST /api/v1/questionnaires` | Recibe un archivo (`file`, multipart) y opcionalmente el modelo (`model`, un `id` de `GET /models`). Devuelve el JSON del cuestionario. Consume una unidad de la cuota diaria del cliente. |
-| `/api/v1/admin/clients` | Panel de administración: listar, crear (`POST`), editar (`PATCH /{id}`: nombre, límites, activar/desactivar) y reemplazar la clave (`POST /{id}/key`). Solo con clave de administrador. |
+| `/api/v1/admin/clients` | Panel de administración: listar, crear (`POST`), editar (`PATCH /{id}`: nombre, límites, activar/desactivar), reemplazar la clave (`POST /{id}/key`) y eliminar (`DELETE /{id}`, salvo administradores). Solo con clave de administrador. |
 | `GET /health` | Estado del servicio (sin autenticación). Solo en el backend: nginx no lo publica. |
 
 ### Headers de la respuesta

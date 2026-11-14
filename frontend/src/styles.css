@@ -319,6 +319,16 @@ button {
   background: var(--surface-muted);
 }
 
+.button--danger {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.button--danger:hover:not(:disabled) {
+  background: var(--danger-soft);
+}
+
 .button--primary {
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
   box-shadow: var(--shadow-strong);

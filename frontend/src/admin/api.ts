@@ -61,6 +61,14 @@ export async function replaceKey(adminKey: string, clientId: string): Promise<Is
   return issued(await call(adminKey, `/clients/${encodeURIComponent(clientId)}/key`, "POST"));
 }
 
+/** Deletes the client, its key and its usage history. Cannot be undone. */
+export async function deleteClient(adminKey: string, clientId: string): Promise<void> {
+  await send(`${ADMIN_URL}/clients/${encodeURIComponent(clientId)}`, {
+    method: "DELETE",
+    headers: { [API_KEY_HEADER]: adminKey },
+  });
+}
+
 async function call(
   adminKey: string,
   path: string,

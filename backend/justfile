@@ -93,6 +93,10 @@ create-admin name="Administración":
 create-key name daily_limit="100" per_minute_limit="10":
     uv run python -m app.auth.create_key --name "{{ name }}" --daily-limit {{ daily_limit }} --per-minute-limit {{ per_minute_limit }}
 
+# Delete a client or an administrator by id (its key stops working; cannot be undone)
+delete-key client_id:
+    uv run python -m app.auth.delete_client "{{ client_id }}"
+
 # Remove caches
 [group('admin')]
 clean:

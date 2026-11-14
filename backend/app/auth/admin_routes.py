@@ -1,24 +1,25 @@
 """`/api/v1/admin`: the admin panel's API. Every endpoint needs an administrator key.
 
 Administrators manage clients: create them (getting a key and an invitation link once), change
-their name and limits, deactivate them and replace their key. Administrators themselves are
-created only with the admin command, so nobody can grant admin rights from the web.
+their name and limits, deactivate them, replace their key and delete them. Administrators
+themselves are created and deleted only with the admin commands, so nobody can grant or remove
+admin rights from the web.
 """
 
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 from pydantic import BaseModel, Field, StringConstraints
 
 from app.auth.clients import ClientLimits, IssuedKey, issue_client, replace_key
 from app.auth.dependencies import (
     AuthenticatedClient,
+    TodayUsage,
     get_client_repository,
-    get_rate_limiter,
+    get_today_usage,
     require_admin,
 )
-from app.auth.rate_limit import RateLimiter
 from app.auth.store import ClientRecord, ClientRepository
 from app.core.config import Settings, get_settings
 from app.core.errors import AppError, ErrorCode
@@ -69,13 +70,14 @@ class UpdateClientRequest(BaseModel):
 
 type Admin = Annotated[AuthenticatedClient, Depends(require_admin)]
 type Clients = Annotated[ClientRepository, Depends(get_client_repository)]
-type Limiter = Annotated[RateLimiter, Depends(get_rate_limiter)]
+type Today = Annotated[TodayUsage, Depends(get_today_usage)]
 type CurrentSettings = Annotated[Settings, Depends(get_settings)]
 
 
 @router.get("/clients")
-def list_clients(_: Admin, clients: Clients, limiter: Limiter) -> list[ClientView]:
-    return [_view(client, limiter) for client in clients.list_all()]
+def list_clients(_: Admin, clients: Clients, today: Today) -> list[ClientView]:
+    used_today = today.by_client()
+    return [_view(client, used_today.get(client.id, 0)) for client in clients.list_all()]
 
 
 @router.post("/clients", status_code=status.HTTP_201_CREATED)
@@ -83,12 +85,11 @@ def create_client(
     request: CreateClientRequest,
     _: Admin,
     clients: Clients,
-    limiter: Limiter,
     settings: CurrentSettings,
 ) -> IssuedKeyView:
     limits = ClientLimits(per_minute=request.per_minute_limit, daily=request.daily_limit)
     issued = issue_client(clients, settings, name=request.name, limits=limits)
-    return _issued_view(issued, limiter)
+    return _issued_view(issued, used_today=0)
 
 
 @router.patch("/clients/{client_id}")
@@ -97,7 +98,7 @@ def update_client(
     request: UpdateClientRequest,
     admin: Admin,
     clients: Clients,
-    limiter: Limiter,
+    today: Today,
 ) -> ClientView:
     if client_id == admin.id and request.active is False:
         raise AppError(ErrorCode.INVALID_REQUEST, "You cannot deactivate your own key.")
@@ -110,7 +111,7 @@ def update_client(
     )
     if updated is None:
         raise _client_not_found(client_id)
-    return _view(updated, limiter)
+    return _view(updated, today.of(client_id))
 
 
 @router.post("/clients/{client_id}/key")
@@ -118,7 +119,7 @@ def replace_client_key(
     client_id: str,
     admin: Admin,
     clients: Clients,
-    limiter: Limiter,
+    today: Today,
     settings: CurrentSettings,
 ) -> IssuedKeyView:
     if client_id == admin.id:
@@ -127,10 +128,22 @@ def replace_client_key(
     issued = replace_key(clients, settings, client_id)
     if issued is None:
         raise _client_not_found(client_id)
-    return _issued_view(issued, limiter)
+    return _issued_view(issued, today.of(client_id))
 
 
-def _view(client: ClientRecord, limiter: RateLimiter) -> ClientView:
+@router.delete("/clients/{client_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_client(client_id: str, _: Admin, clients: Clients) -> Response:
+    client = clients.find(client_id)
+    if client is None:
+        raise _client_not_found(client_id)
+    if client.is_admin:
+        message = "Administrators are deleted with the admin command, not from the panel."
+        raise AppError(ErrorCode.INVALID_REQUEST, message)
+    clients.delete(client_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+def _view(client: ClientRecord, used_today: int) -> ClientView:
     return ClientView(
         id=client.id,
         name=client.name,
@@ -138,16 +151,16 @@ def _view(client: ClientRecord, limiter: RateLimiter) -> ClientView:
         is_admin=client.is_admin,
         per_minute_limit=client.per_minute_limit,
         daily_limit=client.daily_limit,
-        used_today=limiter.used_today(client.id),
+        used_today=used_today,
         created_at=client.created_at,
         key_created_at=client.key_created_at,
         last_used_at=client.last_used_at,
     )
 
 
-def _issued_view(issued: IssuedKey, limiter: RateLimiter) -> IssuedKeyView:
+def _issued_view(issued: IssuedKey, used_today: int) -> IssuedKeyView:
     return IssuedKeyView(
-        client=_view(issued.client, limiter),
+        client=_view(issued.client, used_today),
         api_key=issued.api_key,
         invite_url=issued.invite_url,
     )

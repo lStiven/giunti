@@ -7,6 +7,7 @@ interface ClientCardProps {
   busy: boolean;
   onChange: (changes: ClientChanges) => void;
   onNewInvitation: () => void;
+  onDelete: () => void;
 }
 
 const DATE_FORMAT = new Intl.DateTimeFormat("es", { dateStyle: "medium", timeStyle: "short" });
@@ -17,6 +18,7 @@ export function ClientCard({
   busy,
   onChange,
   onNewInvitation,
+  onDelete,
 }: ClientCardProps): ReactElement {
   const [editing, setEditing] = useState(false);
 
@@ -97,6 +99,14 @@ export function ClientCard({
             onClick={onNewInvitation}
           >
             Nueva invitación
+          </button>
+          <button
+            type="button"
+            className="button button--danger button--small"
+            disabled={busy}
+            onClick={onDelete}
+          >
+            Eliminar
           </button>
         </div>
       )}

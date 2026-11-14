@@ -133,4 +133,33 @@ describe("AdminApp", () => {
     ).toBeDefined();
     expect(confirm).toHaveBeenCalledTimes(2);
   });
+
+  it("deletes a client after confirmation and removes it from the list", async () => {
+    openWithInvitation();
+    const other = client({ id: "liceo", name: "Liceo Nº 5" });
+    const fetchStub = stubAdminApi((method) =>
+      method === "DELETE" ? new Response(null, { status: 204 }) : json([client(), other]),
+    );
+    const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValue(true);
+    const user = userEvent.setup();
+    render(<AdminApp />);
+    const card = (await screen.findByText("Colegio San José")).closest("li");
+    if (card === null) {
+      throw new Error("client card not found");
+    }
+    const button = within(card).getByRole("button", { name: "Eliminar" });
+
+    await user.click(button);
+    expect(fetchStub).toHaveBeenCalledOnce();
+
+    await user.click(button);
+    expect(await screen.findByRole("heading", { name: "Clientes (1)" })).toBeDefined();
+    expect(screen.queryByText("Colegio San José")).toBeNull();
+    expect(screen.getByText("Liceo Nº 5")).toBeDefined();
+    expect(fetchStub).toHaveBeenLastCalledWith(
+      expect.stringMatching(/\/api\/v1\/admin\/clients\/colegio$/),
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(confirm).toHaveBeenCalledTimes(2);
+  });
 });

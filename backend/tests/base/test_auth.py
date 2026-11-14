@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -10,10 +10,11 @@ from pydantic import SecretStr
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.auth.create_key import main as create_key_main
+from app.auth.delete_client import main as delete_client_main
 from app.auth.dependencies import AuthenticatedClient, get_rate_limiter, require_extraction_quota
 from app.auth.keys import client_id_of, generate_key, hash_key, key_matches
-from app.auth.rate_limit import Quota, RateLimiter
-from app.auth.store import ClientRepository, NewClient
+from app.auth.rate_limit import DailyUsage, MemoryDailyUsage, Quota, RateLimiter
+from app.auth.store import ClientRepository, NewClient, UsageRepository
 from app.core.config import LLMCatalog, Settings, get_settings
 from app.core.database import make_engine
 from app.core.errors import AppError, ErrorCode
@@ -85,9 +86,9 @@ def _at(text: str) -> FakeClock:
     return FakeClock(datetime.fromisoformat(text).replace(tzinfo=UTC).timestamp())
 
 
-def _rate_limited(limiter: RateLimiter, quota: Quota) -> AppError:
+def _rate_limited(limiter: RateLimiter, quota: Quota, daily: DailyUsage) -> AppError:
     with pytest.raises(AppError) as error:
-        limiter.consume("acme", quota)
+        limiter.consume("acme", quota, daily)
     assert error.value.code is ErrorCode.RATE_LIMITED
     return error.value
 
@@ -177,7 +178,7 @@ def test_extraction_quota_is_consumed_reported_and_marks_the_client_as_used(
 
     with database() as session:
         clients = ClientRepository(session)
-        require_extraction_quota(response, client, RateLimiter(), clients)
+        require_extraction_quota(response, client, RateLimiter(), clients, UsageRepository(session))
         last_used = clients.find("acme")
 
     assert response.headers["X-RateLimit-Limit-Day"] == "5"
@@ -188,48 +189,89 @@ def test_extraction_quota_is_consumed_reported_and_marks_the_client_as_used(
 
 def test_requests_over_the_per_minute_limit_wait_for_the_window() -> None:
     clock = _at("2026-11-14T10:00:00")
-    limiter = RateLimiter(clock)
+    limiter, daily = RateLimiter(clock), MemoryDailyUsage()
     quota = Quota(per_minute=2, daily=100)
-    limiter.consume("acme", quota)
+    limiter.consume("acme", quota, daily)
     clock.now += 20
-    limiter.consume("acme", quota)
+    limiter.consume("acme", quota, daily)
 
-    error = _rate_limited(limiter, quota)
+    error = _rate_limited(limiter, quota, daily)
 
     assert error.retry_after_s == 40
     clock.now += 40
-    assert limiter.consume("acme", quota).daily_remaining == 97
+    assert limiter.consume("acme", quota, daily).daily_remaining == 97
 
 
 def test_daily_limit_resets_at_utc_midnight() -> None:
     clock = _at("2026-11-14T23:00:00")
-    limiter = RateLimiter(clock)
+    limiter, daily = RateLimiter(clock), MemoryDailyUsage()
     quota = Quota(per_minute=100, daily=1)
-    limiter.consume("acme", quota)
+    limiter.consume("acme", quota, daily)
 
-    error = _rate_limited(limiter, quota)
+    error = _rate_limited(limiter, quota, daily)
 
     assert error.retry_after_s == 3600
     assert "Daily limit of 1" in error.message
     clock.now += 3600
-    assert limiter.consume("acme", quota).daily_remaining == 0
+    assert limiter.consume("acme", quota, daily).daily_remaining == 0
 
 
 def test_clients_have_independent_limits() -> None:
-    limiter = RateLimiter(_at("2026-11-14T10:00:00"))
+    limiter, daily = RateLimiter(_at("2026-11-14T10:00:00")), MemoryDailyUsage()
     quota = Quota(per_minute=1, daily=1)
-    limiter.consume("acme", quota)
+    limiter.consume("acme", quota, daily)
 
-    assert limiter.consume("other", quota).daily_remaining == 0
+    assert limiter.consume("other", quota, daily).daily_remaining == 0
 
 
-def test_rate_limited_response_has_retry_after_header() -> None:
+def test_daily_usage_survives_a_restart_because_it_lives_in_the_database(
+    database: sessionmaker[Session],
+) -> None:
+    quota = Quota(per_minute=10, daily=2)
+    with database() as session:
+        RateLimiter(_at("2026-11-14T10:00:00")).consume("acme", quota, UsageRepository(session))
+
+    with database() as session:
+        restarted = RateLimiter(_at("2026-11-14T18:00:00"))
+        status = restarted.consume("acme", quota, UsageRepository(session))
+        error = _rate_limited(restarted, quota, UsageRepository(session))
+
+    assert status.daily_remaining == 0
+    assert error.reason == "daily_limit"
+
+
+def test_stored_daily_usage_stops_at_the_limit_and_is_counted_per_day(
+    database: sessionmaker[Session],
+) -> None:
+    monday, tuesday = date(2026, 11, 16), date(2026, 11, 17)
+    with database() as session:
+        usage = UsageRepository(session)
+        counts = [usage.try_increment("acme", monday, 2) for _ in range(3)]
+        usage.try_increment("acme", tuesday, 2)
+        usage.try_increment("off", monday, 2)
+
+        assert counts == [1, 2, None]
+        assert usage.count("acme", monday) == 2
+        assert usage.counts_on(monday) == {"acme": 2, "off": 1}
+        assert usage.counts_on(tuesday) == {"acme": 1}
+
+
+def test_a_request_rejected_by_the_daily_limit_does_not_use_a_minute_slot() -> None:
+    limiter, daily = RateLimiter(_at("2026-11-14T10:00:00")), MemoryDailyUsage()
+    tight, roomy = Quota(per_minute=1, daily=0), Quota(per_minute=1, daily=10)
+    _rate_limited(limiter, tight, daily)
+
+    assert limiter.consume("acme", roomy, daily).daily_remaining == 9
+
+
+def test_rate_limited_response_has_retry_after_header(database: sessionmaker[Session]) -> None:
     limiter = RateLimiter(_at("2026-11-14T10:00:00"))
     app.dependency_overrides[get_rate_limiter] = lambda: limiter
     headers = {"X-API-Key": ACME_KEY}
     client = TestClient(app)
-    for _ in range(5):
-        limiter.consume("acme", Quota(per_minute=100, daily=5))
+    with database() as session:
+        for _ in range(5):
+            UsageRepository(session).try_increment("acme", date(2026, 11, 14), 5)
 
     response = client.post(
         "/api/v1/questionnaires", files={"file": ("t.pdf", b"%PDF-1.4")}, headers=headers
@@ -261,6 +303,21 @@ def test_create_key_command_stores_the_client_and_prints_its_key_and_link(
     assert stored.daily_limit == 7
     assert not stored.is_admin
     assert key_matches(key, stored.key_hash, PEPPER)
+
+
+def test_delete_command_removes_any_client_including_administrators(tmp_path: Path) -> None:
+    settings = _settings(database_url=f"sqlite:///{tmp_path / 'keys.db'}")
+    create_key_main(["--name", "Old Admin", "--admin"], settings)
+
+    deleted = delete_client_main(["old-admin"], settings)
+    missing = delete_client_main(["old-admin"], settings)
+
+    engine = make_engine(settings.database_url)
+    with Session(engine) as session:
+        stored = ClientRepository(session).find("old-admin")
+    engine.dispose()
+    assert (deleted, missing) == (0, 1)
+    assert stored is None
 
 
 def test_create_key_command_creates_administrators_with_an_admin_link(

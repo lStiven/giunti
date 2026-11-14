@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.auth.clients import ClientLimits, issue_client
 from app.auth.dependencies import get_rate_limiter
-from app.auth.rate_limit import Quota, RateLimiter
-from app.auth.store import ClientRepository
+from app.auth.rate_limit import RateLimiter
+from app.auth.store import ClientRepository, UsageRepository
 from app.core.config import LLMCatalog, Settings, get_settings
 from app.main import app
 
@@ -75,8 +75,11 @@ def test_client_keys_cannot_use_the_admin_panel(keys: dict[str, str]) -> None:
     assert "administrator" in response.json()["error"]["message"]
 
 
-def test_admin_lists_clients_with_todays_usage(keys: dict[str, str], limiter: RateLimiter) -> None:
-    limiter.consume("colegio-san-jose", Quota(per_minute=10, daily=100))
+def test_admin_lists_clients_with_todays_usage(
+    keys: dict[str, str], limiter: RateLimiter, database: sessionmaker[Session]
+) -> None:
+    with database() as session:
+        UsageRepository(session).try_increment("colegio-san-jose", limiter.today(), 100)
 
     clients = {client["id"]: client for client in _call("GET", "/clients", keys["admin"]).json()}
 
@@ -148,8 +151,36 @@ def test_admins_cannot_replace_their_own_key_from_the_panel(keys: dict[str, str]
     assert _call("POST", "/clients/admin/key", keys["admin"]).status_code == 422
 
 
+def test_deleting_a_client_removes_it_with_its_key_and_usage(
+    keys: dict[str, str], limiter: RateLimiter, database: sessionmaker[Session]
+) -> None:
+    with database() as session:
+        UsageRepository(session).try_increment("colegio-san-jose", limiter.today(), 100)
+
+    response = _call("DELETE", "/clients/colegio-san-jose", keys["admin"])
+
+    assert response.status_code == 204
+    assert _models_status(keys["school"]) == 401
+    listed = [client["id"] for client in _call("GET", "/clients", keys["admin"]).json()]
+    assert listed == ["admin"]
+    with database() as session:
+        assert UsageRepository(session).counts_on(limiter.today()) == {}
+
+
+def test_administrators_cannot_be_deleted_from_the_panel(keys: dict[str, str]) -> None:
+    response = _call("DELETE", "/clients/admin", keys["admin"])
+
+    assert response.status_code == 422
+    assert _models_status(keys["admin"]) == 200
+
+
+def test_clients_cannot_delete_other_clients(keys: dict[str, str]) -> None:
+    assert _call("DELETE", "/clients/admin", keys["school"]).status_code == 403
+
+
 @pytest.mark.parametrize(
-    ("method", "path"), [("PATCH", "/clients/ghost"), ("POST", "/clients/ghost/key")]
+    ("method", "path"),
+    [("PATCH", "/clients/ghost"), ("POST", "/clients/ghost/key"), ("DELETE", "/clients/ghost")],
 )
 def test_unknown_clients_are_not_found(keys: dict[str, str], method: str, path: str) -> None:
     response = _call(method, path, keys["admin"], {"active": True} if method == "PATCH" else None)

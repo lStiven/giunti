@@ -7,13 +7,14 @@ adds the operations of the admin panel and the admin command.
 import re
 import unicodedata
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Protocol
 
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.auth.models import ClientRow
+from app.auth.models import ClientRow, DailyUsageRow
 
 MAX_CLIENT_ID_LENGTH = 32
 _NOT_SLUG = re.compile(r"[^a-z0-9]+")
@@ -122,11 +123,72 @@ class ClientRepository:
         self._session.commit()
         return _record(row)
 
+    def delete(self, client_id: str) -> bool:
+        """Removes the client and its usage history; False when it does not exist."""
+        if self._session.get(ClientRow, client_id) is None:
+            return False
+        self._session.execute(delete(DailyUsageRow).where(DailyUsageRow.client_id == client_id))
+        self._session.execute(delete(ClientRow).where(ClientRow.id == client_id))
+        self._session.commit()
+        return True
+
     def mark_used(self, client_id: str) -> None:
         row = self._session.get(ClientRow, client_id)
         if row is not None:
             row.last_used_at = datetime.now(UTC)
             self._session.commit()
+
+
+class UsageRepository:
+    """Daily usage counts in the database (`app.auth.rate_limit.DailyUsage`)."""
+
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def count(self, client_id: str, day: date) -> int:
+        stored = self._session.scalar(
+            select(DailyUsageRow.count).where(
+                DailyUsageRow.client_id == client_id, DailyUsageRow.day == day
+            )
+        )
+        return stored or 0
+
+    def counts_on(self, day: date) -> dict[str, int]:
+        rows = self._session.execute(
+            select(DailyUsageRow.client_id, DailyUsageRow.count.label("used")).where(
+                DailyUsageRow.day == day
+            )
+        )
+        return {row.client_id: row.used for row in rows}
+
+    def try_increment(self, client_id: str, day: date, limit: int) -> int | None:
+        # Two rounds: if a concurrent request inserts the day's row first, the second round
+        # finds it and increments it.
+        for _ in range(2):
+            incremented: int | None = self._session.scalar(
+                update(DailyUsageRow)
+                .where(
+                    DailyUsageRow.client_id == client_id,
+                    DailyUsageRow.day == day,
+                    DailyUsageRow.count < limit,
+                )
+                .values(count=DailyUsageRow.count + 1)
+                .returning(DailyUsageRow.count)
+            )
+            if incremented is not None:
+                self._session.commit()
+                return incremented
+            if self.count(client_id, day) > 0 or limit < 1:
+                self._session.rollback()
+                return None
+            self._session.add(DailyUsageRow(client_id=client_id, day=day, count=1))
+            try:
+                self._session.commit()
+            except IntegrityError:
+                self._session.rollback()
+                continue
+            return 1
+        return None
 
 
 def slugify(name: str) -> str:

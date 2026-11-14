@@ -9,6 +9,7 @@ import { ADMIN_KEY_ITEM, forgetKey, loadKey, saveKey } from "../storage";
 import {
   createClient,
   listClients,
+  deleteClient,
   replaceKey,
   updateClient,
   type ClientChanges,
@@ -116,6 +117,19 @@ export default function AdminApp(): ReactElement {
     }
   };
 
+  const remove = (client: ClientView): void => {
+    const confirmed = window.confirm(
+      `¿Eliminar a ${client.name}? Su enlace y su clave dejarán de funcionar y se borrará su historial de uso. No se puede deshacer.`,
+    );
+    if (confirmed) {
+      void run(async (key) => {
+        await deleteClient(key, client.id);
+        setClients((current) => current.filter((c) => c.id !== client.id));
+        setIssued((current) => (current?.client.id === client.id ? null : current));
+      });
+    }
+  };
+
   return (
     <div className="page page--wide">
       <header className="hero hero--compact">
@@ -180,6 +194,9 @@ export default function AdminApp(): ReactElement {
                     }}
                     onNewInvitation={() => {
                       newInvitation(client);
+                    }}
+                    onDelete={() => {
+                      remove(client);
                     }}
                   />
                 ))}

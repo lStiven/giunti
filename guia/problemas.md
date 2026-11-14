@@ -32,7 +32,7 @@ Cada error que muestra la página incluye un **código de solicitud**. Búscalo 
 | "Se agotó la cuota del modelo" | El proyecto de Gemini alcanzó su límite de gasto o de cuota | Sube el límite en [ai.studio/spend](https://ai.studio/spend) o espera a que se renueve; mientras tanto, elige otro modelo |
 | "La clave de acceso no es válida" para todos | Cambió `API_KEY_PEPPER` o se borró la base de datos | Crea un administrador nuevo y nuevas invitaciones |
 | "La clave de acceso no es válida" para un cliente | Se generó una **Nueva invitación** y la anterior dejó de funcionar | Envíale el enlace nuevo |
-| Perdí el enlace del administrador | Solo se muestra una vez | Ejecuta de nuevo el comando que crea el administrador: crea otro |
+| Perdí el enlace del administrador | Solo se muestra una vez | Ejecuta de nuevo el comando que crea el administrador: crea otro. Después elimina el anterior con `python -m app.auth.delete_client <id>` (ver [uso](uso.md#panel-de-administración)) |
 | El enlace de invitación abre una dirección equivocada | `PUBLIC_APP_URL` no corresponde a la dirección real | Corrígelo (en el `.env` de la raíz con Docker Compose, en `backend/.env` en desarrollo), reinicia y genera una **Nueva invitación** |
 | "Alcanzaste el límite de uso" | El cliente llegó a su límite por minuto o diario | Espera, o sube sus límites en el panel (**Editar límites**) |
 | "No encontramos preguntas" (`NO_ITEMS`) | El documento no parece un cuestionario, o el modelo no lo leyó bien | Prueba con otro modelo |
