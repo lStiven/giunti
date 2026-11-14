@@ -33,6 +33,7 @@ HTTP_STATUS_BY_CODE: dict[ErrorCode, int] = {
     ErrorCode.INTERNAL_ERROR: 500,
     ErrorCode.LLM_UNAVAILABLE: 502,
     ErrorCode.INVALID_LLM_RESPONSE: 502,
+    ErrorCode.NO_MODELS_AVAILABLE: 503,
 }
 
 logger = logging.getLogger(__name__)

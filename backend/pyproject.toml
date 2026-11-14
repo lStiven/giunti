@@ -84,7 +84,12 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 addopts = "-q --strict-markers"
-filterwarnings = ["error::DeprecationWarning", "error::PendingDeprecationWarning"]
+filterwarnings = [
+    "error::DeprecationWarning",
+    "error::PendingDeprecationWarning",
+    # LiteLLM's own TypedDicts use ReadOnly, which Pydantic only warns about.
+    "ignore:Item .* is using the `ReadOnly` qualifier:UserWarning",
+]
 
 [tool.importlinter]
 root_package = "app"

@@ -1,1 +1,64 @@
-"""`POST /api/v1/questionnaires`: one multipart file, API key required, returns the result."""
+"""`POST /api/v1/questionnaires`: one multipart file (and optionally the model), returns the
+questionnaire JSON.
+
+The JSON body is the contract fixed by the problem statement; data about the run goes in
+headers: the model used, token usage, LLM time, repairs and warnings (a JSON list of strings).
+"""
+
+import json
+from functools import lru_cache
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, File, Form, Response, UploadFile
+
+from app.api.error_handlers import ErrorResponse
+from app.core.config import get_settings
+from app.documents.security import BYTES_PER_MB
+from app.extraction.schema import Questionnaire
+from app.extraction.service import ExtractionOutcome, QuestionnaireExtractor
+from app.llm.structured import StructuredRunner
+
+MAX_WARNING_HEADER_ITEMS = 20
+
+router = APIRouter(prefix="/api/v1", tags=["questionnaires"])
+
+
+@lru_cache
+def get_extractor() -> QuestionnaireExtractor:
+    """One extractor per process, so circuit breakers are shared across requests."""
+    settings = get_settings()
+    return QuestionnaireExtractor(StructuredRunner.from_settings(settings), settings)
+
+
+@router.post(
+    "/questionnaires",
+    response_model=Questionnaire,
+    responses={
+        status: {"model": ErrorResponse} for status in (401, 403, 413, 415, 422, 429, 500, 502, 503)
+    },
+)
+async def extract_questionnaire(
+    response: Response,
+    extractor: Annotated[QuestionnaireExtractor, Depends(get_extractor)],
+    file: Annotated[UploadFile, File(description="PDF, DOCX or XLSX questionnaire")],
+    model: Annotated[
+        str | None,
+        Form(description="Model id from GET /api/v1/models; the default model when omitted"),
+    ] = None,
+) -> Questionnaire:
+    # Read one byte over the limit so oversized files are rejected without loading them whole.
+    limit = get_settings().max_file_size_mb * BYTES_PER_MB
+    data = await file.read(limit + 1)
+    outcome = await extractor.process(data, file.filename or "", model_id=model or None)
+    _set_run_headers(response, outcome)
+    return outcome.questionnaire
+
+
+def _set_run_headers(response: Response, outcome: ExtractionOutcome) -> None:
+    response.headers["X-LLM-Model"] = outcome.model_id
+    response.headers["X-LLM-Input-Tokens"] = str(outcome.input_tokens)
+    response.headers["X-LLM-Output-Tokens"] = str(outcome.output_tokens)
+    response.headers["X-LLM-Repairs"] = str(outcome.repairs)
+    response.headers["X-LLM-Duration-Ms"] = str(outcome.llm_duration_ms)
+    warnings = list(outcome.warnings[:MAX_WARNING_HEADER_ITEMS])
+    response.headers["X-Extraction-Warnings"] = json.dumps(warnings, ensure_ascii=True)

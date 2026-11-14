@@ -14,6 +14,7 @@ class ErrorCode(StrEnum):
     NO_TEXT = "NO_TEXT"
     NO_ITEMS = "NO_ITEMS"
     LLM_UNAVAILABLE = "LLM_UNAVAILABLE"
+    NO_MODELS_AVAILABLE = "NO_MODELS_AVAILABLE"
     INVALID_LLM_RESPONSE = "INVALID_LLM_RESPONSE"
     UNAUTHENTICATED = "UNAUTHENTICATED"
     FORBIDDEN = "FORBIDDEN"
@@ -31,7 +32,11 @@ DEFAULT_MESSAGES: dict[ErrorCode, str] = {
     ErrorCode.PROTECTED_FILE: "The file is password protected.",
     ErrorCode.NO_TEXT: "No readable content was found in the file.",
     ErrorCode.NO_ITEMS: "No questionnaire items were found in the file.",
-    ErrorCode.LLM_UNAVAILABLE: "No language model is available right now. Try again later.",
+    ErrorCode.LLM_UNAVAILABLE: "The language model is not available right now. Try again later.",
+    ErrorCode.NO_MODELS_AVAILABLE: (
+        "No language model is enabled on this server: no provider has an API key configured. "
+        "Contact the service administrator."
+    ),
     ErrorCode.INVALID_LLM_RESPONSE: "The language models did not return a valid extraction.",
     ErrorCode.UNAUTHENTICATED: "A valid API key is required.",
     ErrorCode.FORBIDDEN: "This API key is not allowed to perform this action.",

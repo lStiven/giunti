@@ -1,0 +1,67 @@
+# Catalog of the language models clients can use.
+#
+# Each request uses one model, chosen by the client (or default_model): there is no fallback.
+# A model is enabled only when its provider has an API key in the .env file.
+#
+# Add a model of an existing provider: copy a [[models]] block and change its fields.
+# Add a provider: add a [providers.<id>] block (the id is the prefix of the LiteLLM model
+# name, e.g. "gemini" in "gemini/gemini-3.8-flash") and put its API key in the .env file:
+# LLM_API_KEYS={"<id>": "<key>"}  (Gemini can also use GEMINI_API_KEY).
+#
+# Model fields:
+#   id                 Short, stable name clients send to choose the model.
+#   model              LiteLLM model name: "provider/model".
+#   label, description Shown to clients (in Spanish).
+#   free               Uses a free plan (low limits; check the provider's data policy).
+#   vision             Can read page images. Required for scanned documents.
+#   max_output_tokens, max_input_tokens (optional, looked up in LiteLLM when missing),
+#   temperature (optional, provider default when missing), reasoning_effort (optional:
+#   minimal | low | medium | high), json_mode (default true).
+
+default_model = "gemini-flash"
+
+[providers.gemini]
+label = "Google Gemini"
+description = "Modelos de Google. Proveedor principal del servicio."
+
+[providers.groq]
+label = "Groq"
+description = "Plan gratuito con límites diarios. Útil para comparar resultados."
+
+[providers.mistral]
+label = "Mistral AI"
+description = "Plan gratuito con límites. Mistral puede usar los datos para entrenar sus modelos salvo que se desactive en su consola: no usar con material confidencial."
+
+[[models]]
+id = "gemini-flash"
+model = "gemini/gemini-3.8-flash"
+label = "Gemini 3.8 Flash"
+description = "Rápido y económico. Recomendado para la mayoría de los cuestionarios."
+vision = true
+max_output_tokens = 32000
+
+[[models]]
+id = "gemini-hydrogen"
+model = "gemini/gemini-4-hydrogen"
+label = "Gemini 4 Hydrogen"
+description = "La versión más reciente de Google. Más lenta y cara que Flash; pensada para documentos difíciles (escaneos, tablas complejas, muchas figuras)."
+vision = true
+max_output_tokens = 32000
+
+[[models]]
+id = "groq-qwen"
+model = "groq/qwen/qwen3.8-27b"
+label = "Qwen 3.8 27B (Groq)"
+description = "Modelo abierto, gratuito y muy rápido. Admite documentos más cortos que Gemini."
+free = true
+vision = true
+max_output_tokens = 16384
+
+[[models]]
+id = "mistral-medium"
+model = "mistral/mistral-medium-latest"
+label = "Mistral Medium"
+description = "Modelo europeo, gratuito con límites. Buen equilibrio entre calidad y velocidad."
+free = true
+vision = true
+max_output_tokens = 32000

@@ -18,6 +18,7 @@ ENV UV_COMPILE_BYTECODE=1 \
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
+COPY llm_catalog.toml ./
 COPY app ./app
 
 RUN useradd --create-home appuser
