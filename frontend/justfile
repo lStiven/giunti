@@ -31,14 +31,32 @@ lint:
 typecheck:
     npx tsc --noEmit
 
+# Unit and component tests (the API is always faked)
+[group('quality')]
+test *args:
+    npx vitest run {{ args }}
+
 # Production build
 [group('quality')]
 build:
     npx vite build --logLevel warn
 
+# Fail when the production JavaScript (gzip) exceeds the budget, in KB
+[group('quality')]
+size budget_kb="120":
+    #!/usr/bin/env node
+    const { readdirSync, readFileSync } = require("node:fs");
+    const { gzipSync } = require("node:zlib");
+    const dir = "dist/assets";
+    const files = readdirSync(dir).filter((name) => name.endsWith(".js"));
+    const bytes = files.reduce((sum, name) => sum + gzipSync(readFileSync(`${dir}/${name}`)).length, 0);
+    const kb = bytes / 1024;
+    console.log(`JavaScript: ${kb.toFixed(1)} KB gzip (budget {{ budget_kb }} KB)`);
+    if (kb > {{ budget_kb }}) process.exit(1);
+
 # Every quality gate
 [group('quality')]
-check: lint typecheck build
+check: lint typecheck test build size
 
 # Fix and check one edited file
 [group('quality')]
