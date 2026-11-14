@@ -5,6 +5,7 @@ ones fixed by the problem statement, and the texts are copied in the document's 
 """
 
 from app.documents.models import ExtractedDocument, PageSource
+from app.extraction.chunking import Chunk
 from app.llm.client import ContentPart, ImagePart, TextPart
 
 INSTRUCTIONS = """\
@@ -88,26 +89,49 @@ answer: only an option marked differently from its siblings counts.
 - evidencia: the short fragment of the document that shows the answer, copied as it appears in \
 the page text including its marks ("**B) Roma**", "Soluzioni: 1-B"); null when \
 respuesta_correcta is null.
+
+# Long documents
+A request may cover only some pages of a longer document; then a first note says which ones. \
+Extract only the items that start on those pages, keeping the numbers shown in the document. \
+Pages marked as context are there only to complete an item that continues on them or to read an \
+answer key: never extract items that start on them.
 """
 
 NO_TEXT_LAYER_NOTE = "(no text layer: read it from the image)"
+CONTEXT_NOTE = "(context only: do not extract items that start here)"
 CLOSING_REQUEST = "Extract all the items of this document following the instructions."
 
 
-def build_content(document: ExtractedDocument) -> list[ContentPart]:
-    """Each page as its text followed by its image.
+def build_content(document: ExtractedDocument, chunk: Chunk | None = None) -> list[ContentPart]:
+    """Each page of the chunk (all pages by default) as its text followed by its image.
 
-    Images are required only for pages without a usable text layer; elsewhere they add visual
-    context and may be dropped for models without vision.
+    Images are required only for pages without a usable text layer that items are extracted
+    from; elsewhere they add visual context and may be dropped for models without vision.
     """
+    pages = set(chunk.pages) if chunk else {page.number for page in document.pages}
+    context = set(chunk.context_pages) if chunk else set()
     parts: list[ContentPart] = []
+    if chunk and len(chunk.pages) < len(document.pages):
+        parts.append(TextPart(_part_notice(chunk, len(document.pages))))
     for page in document.pages:
+        if page.number not in pages | context:
+            continue
         image_only = page.source is PageSource.IMAGE_ONLY
-        header = f"=== Page {page.number} ==="
+        notes = [CONTEXT_NOTE] if page.number in context else []
         if image_only:
-            header = f"{header} {NO_TEXT_LAYER_NOTE}"
+            notes.append(NO_TEXT_LAYER_NOTE)
+        header = " ".join([f"=== Page {page.number} ===", *notes])
         parts.append(TextPart(f"{header}\n{page.text}"))
         if page.image_png is not None:
-            parts.append(ImagePart(page.image_png, required=image_only))
+            parts.append(ImagePart(page.image_png, required=image_only and page.number in pages))
     parts.append(TextPart(CLOSING_REQUEST))
     return parts
+
+
+def _part_notice(chunk: Chunk, page_count: int) -> str:
+    return (
+        f"This request covers pages {chunk.first_page}-{chunk.last_page} of a {page_count}-page "
+        f"document. Extract only the items that start on pages {chunk.first_page}-"
+        f"{chunk.last_page}. Pages marked {CONTEXT_NOTE} are included only to complete an item "
+        "that continues there or to read an answer key."
+    )

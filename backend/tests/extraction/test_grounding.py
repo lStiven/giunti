@@ -7,7 +7,13 @@ from app.documents.models import (
     ExtractedDocument,
     PageSource,
 )
-from app.extraction.grounding import appears_in, document_warnings, grounding_review, normalize
+from app.extraction.grounding import (
+    appears_in,
+    document_warnings,
+    grounding_review,
+    missing_item_numbers,
+    normalize,
+)
 from app.extraction.schema import ExtractedQuestionnaire
 
 PAGE_ONE = """\
@@ -186,3 +192,25 @@ def test_sheets_with_missing_formula_values_produce_a_warning() -> None:
     warnings = document_warnings(_document(page), _questionnaire(_open(1, "a")))
 
     assert warnings[0].startswith("Sheets 1 have formulas without saved values")
+
+
+def test_review_of_a_part_only_looks_for_numbers_on_its_pages() -> None:
+    document = _document(_page(1, "1. Prima domanda"), _page(2, "2. Seconda domanda"))
+
+    review = grounding_review(document, extracted_pages=[1])
+
+    assert review(_questionnaire(_open(1, "Prima domanda"))) == []
+
+
+def test_items_lost_between_parts_are_found_in_the_whole_document() -> None:
+    document = _document(
+        _page(1, "1. Prima domanda"), _page(2, "2. Seconda domanda"), _page(3, "3. Terza")
+    )
+    merged = _questionnaire(_open(1, "Prima domanda"), _open(3, "Terza") | {"pagina": 3})
+
+    assert missing_item_numbers(document, merged) == [
+        (
+            "Item numbers 2 appear in the document but were not extracted; add them if they "
+            "are items."
+        )
+    ]

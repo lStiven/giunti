@@ -5,7 +5,7 @@ Each violation is a specific message the model receives in the repair attempt.
 
 import re
 from collections import Counter
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 
 from app.extraction.schema import Alternative, ExtractedItem, ExtractedQuestionnaire, ItemType
 
@@ -14,7 +14,11 @@ _ISO_639_1 = re.compile(r"^[a-z]{2}$")
 _MIN_OPTIONS = 2
 
 
-def questionnaire_rules(page_count: int) -> Callable[[ExtractedQuestionnaire], list[str]]:
+def questionnaire_rules(pages: Collection[int]) -> Callable[[ExtractedQuestionnaire], list[str]]:
+    """Rules for an extraction whose items must start on `pages`."""
+    allowed = frozenset(pages)
+    span = f"{min(allowed)}-{max(allowed)}" if allowed else "none"
+
     def validate(questionnaire: ExtractedQuestionnaire) -> list[str]:
         errors: list[str] = []
         if not _ISO_639_1.match(questionnaire.language):
@@ -28,10 +32,10 @@ def questionnaire_rules(page_count: int) -> Callable[[ExtractedQuestionnaire], l
             errors.append(f"Item numbers {listed} are repeated; numbers must be unique.")
         for index, item in enumerate(questionnaire.items):
             errors += [f"items[{index}] (numero {item.number}): {e}" for e in _item_errors(item)]
-            if item.page > page_count:
+            if item.page not in allowed:
                 errors.append(
-                    f"items[{index}] (numero {item.number}): pagina {item.page} does not exist; "
-                    f"the document has {page_count} pages."
+                    f"items[{index}] (numero {item.number}): pagina {item.page} is outside the "
+                    f"pages to extract ({span}); extract only items that start on them."
                 )
         return errors[:MAX_REPORTED]
 

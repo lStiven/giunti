@@ -48,7 +48,7 @@ curl -H "X-API-Key: gk_acme_..." -F file=@cuestionario.pdf -F model=gemini-flash
   http://localhost:8080/api/v1/questionnaires
 ```
 
-La respuesta del `POST` incluye headers con datos de la ejecución: `X-LLM-Model`, `X-LLM-Input-Tokens`, `X-LLM-Output-Tokens`, `X-LLM-Repairs`, `X-LLM-Duration-Ms`, `X-Extraction-Warnings` (lista JSON de advertencias: contenido que no se pudo verificar contra el documento, páginas escaneadas, etc.) y `X-RateLimit-Remaining-Day`. Los errores siguen el formato `{"error": {"code", "message", "request_id"}}`; al superar un límite se responde `429 RATE_LIMITED` con `Retry-After`.
+La respuesta del `POST` incluye headers con datos de la ejecución: `X-LLM-Model`, `X-LLM-Input-Tokens`, `X-LLM-Output-Tokens`, `X-LLM-Repairs`, `X-LLM-Duration-Ms`, `X-Extraction-Parts` (en cuántas partes se procesó un documento largo), `X-Extraction-Warnings` (lista JSON de advertencias: contenido que no se pudo verificar contra el documento, páginas escaneadas, etc.) y `X-RateLimit-Remaining-Day`. Los errores siguen el formato `{"error": {"code", "message", "request_id"}}`; al superar un límite se responde `429 RATE_LIMITED` con `Retry-After`.
 
 Los modelos se configuran en [backend/llm_catalog.toml](backend/llm_catalog.toml) y las API keys en `backend/.env` (`GEMINI_API_KEY`, `LLM_API_KEYS`).
 

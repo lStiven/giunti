@@ -3,10 +3,18 @@
 # Each request uses one model, chosen by the client (or default_model): there is no fallback.
 # A model is enabled only when its provider has an API key in the .env file.
 #
+# One model per provider: the one best suited to this problem (reading document pages with
+# their images and copying items literally), in a similar price range so clients can compare
+# providers fairly.
+#
 # Add a model of an existing provider: copy a [[models]] block and change its fields.
 # Add a provider: add a [providers.<id>] block (the id is the prefix of the LiteLLM model
 # name, e.g. "gemini" in "gemini/gemini-3.8-flash") and put its API key in the .env file:
 # LLM_API_KEYS={"<id>": "<key>"}  (Gemini can also use GEMINI_API_KEY).
+#
+# Before adding a model, check on the provider's models page that it is not deprecated and
+# use its exact API id. Avoid "-latest" aliases: they silently move to other (or deprecated)
+# versions, which breaks comparisons between runs.
 #
 # Model fields:
 #   id                 Short, stable name clients send to choose the model.
@@ -24,44 +32,34 @@ default_model = "gemini-flash"
 label = "Google Gemini"
 description = "Modelos de Google. Proveedor principal del servicio."
 
-[providers.groq]
-label = "Groq"
-description = "Plan gratuito con límites diarios. Útil para comparar resultados."
+[providers.openai]
+label = "OpenAI (ChatGPT)"
+description = "Modelos de OpenAI, los mismos que usa ChatGPT."
 
-[providers.mistral]
-label = "Mistral AI"
-description = "Plan gratuito con límites. Mistral puede usar los datos para entrenar sus modelos salvo que se desactive en su consola: no usar con material confidencial."
+[providers.deepseek]
+label = "DeepSeek"
+description = "Modelos de DeepSeek, de bajo costo."
 
 [[models]]
 id = "gemini-flash"
 model = "gemini/gemini-3.8-flash"
 label = "Gemini 3.8 Flash"
-description = "Rápido y económico. Recomendado para la mayoría de los cuestionarios."
+description = "Rápido y preciso leyendo documentos, incluidos los escaneados. Recomendado para la mayoría de los cuestionarios."
 vision = true
 max_output_tokens = 32000
 
 [[models]]
-id = "gemini-hydrogen"
-model = "gemini/gemini-4-hydrogen"
-label = "Gemini 4 Hydrogen"
-description = "La versión más reciente de Google. Más lenta y cara que Flash; pensada para documentos difíciles (escaneos, tablas complejas, muchas figuras)."
+id = "gpt-terra"
+model = "openai/gpt-6.1-terra"
+label = "GPT-6.1 Terra"
+description = "Modelo de OpenAI pensado para razonamiento visual, rápido y eficiente. Lee documentos escaneados."
 vision = true
 max_output_tokens = 32000
 
 [[models]]
-id = "groq-qwen"
-model = "groq/qwen/qwen3.8-27b"
-label = "Qwen 3.8 27B (Groq)"
-description = "Modelo abierto, gratuito y muy rápido. Admite documentos más cortos que Gemini."
-free = true
-vision = true
-max_output_tokens = 16384
-
-[[models]]
-id = "mistral-medium"
-model = "mistral/mistral-medium-latest"
-label = "Mistral Medium"
-description = "Modelo europeo, gratuito con límites. Buen equilibrio entre calidad y velocidad."
-free = true
+id = "deepseek-flash"
+model = "deepseek/deepseek-flash"
+label = "DeepSeek V4.1 Flash"
+description = "El más económico de los tres. Lee documentos escaneados."
 vision = true
 max_output_tokens = 32000

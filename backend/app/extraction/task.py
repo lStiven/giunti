@@ -1,6 +1,7 @@
-"""The questionnaire extraction task for one document: schema, instructions and checks."""
+"""The questionnaire extraction task for one part of a document: schema, instructions, checks."""
 
 from app.documents.models import ExtractedDocument
+from app.extraction.chunking import Chunk
 from app.extraction.grounding import grounding_review
 from app.extraction.prompt import INSTRUCTIONS
 from app.extraction.schema import ExtractedQuestionnaire
@@ -10,11 +11,13 @@ from app.llm.structured import ExtractionTask
 TASK_NAME = "questionnaire"
 
 
-def questionnaire_task(document: ExtractedDocument) -> ExtractionTask[ExtractedQuestionnaire]:
+def questionnaire_task(
+    document: ExtractedDocument, chunk: Chunk
+) -> ExtractionTask[ExtractedQuestionnaire]:
     return ExtractionTask(
         name=TASK_NAME,
         output_type=ExtractedQuestionnaire,
         instructions=INSTRUCTIONS,
-        validate=questionnaire_rules(page_count=len(document.pages)),
-        review=grounding_review(document),
+        validate=questionnaire_rules(chunk.pages),
+        review=grounding_review(document, chunk.pages),
     )

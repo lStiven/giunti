@@ -139,6 +139,8 @@ class Settings(BaseSettings):
     llm_timeout_s: int = 300
     llm_max_retries: int = 2
     llm_repair_attempts: int = 1
+    extraction_pages_per_part: int = Field(default=8, ge=1)
+    extraction_parallel_parts: int = Field(default=4, ge=1)
     gemini_api_key: SecretStr | None = None
     llm_api_keys: dict[str, SecretStr] = Field(
         default={}, description='Keys of the other providers: {"<provider>": "<key>"}'

@@ -11,7 +11,7 @@ These checks can have false positives (unusual layouts, text inside images), so 
 
 import re
 import unicodedata
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Collection, Iterable
 
 from rapidfuzz import fuzz
 
@@ -46,11 +46,14 @@ def appears_in(fragment: str, text: str) -> bool:
     return fuzz.partial_ratio(wanted, text) >= MIN_SIMILARITY
 
 
-def grounding_review(document: ExtractedDocument) -> Callable[[ExtractedQuestionnaire], list[str]]:
+def grounding_review(
+    document: ExtractedDocument, extracted_pages: Collection[int] | None = None
+) -> Callable[[ExtractedQuestionnaire], list[str]]:
+    """Review for an extraction of `extracted_pages` (all pages by default)."""
     pages = {page.number: page for page in document.pages}
     texts = {page.number: normalize(page.text) for page in document.pages if _checkable(page)}
     all_text = " ".join(texts.values())
-    source_numbers = _source_item_numbers(page for page in document.pages if _checkable(page))
+    source_numbers = _numbers_on(document, extracted_pages)
 
     def review(questionnaire: ExtractedQuestionnaire) -> list[str]:
         issues: list[str] = []
@@ -129,6 +132,22 @@ def _item_issues(item: ExtractedItem, text: str, all_text: str) -> list[str]:
             "to null unless the document marks the answer."
         )
     return issues
+
+
+def missing_item_numbers(
+    document: ExtractedDocument, questionnaire: ExtractedQuestionnaire
+) -> list[str]:
+    """Item numbers of the whole document missing from the final result (after merging parts)."""
+    return _missing_numbers(questionnaire, _numbers_on(document, None))
+
+
+def _numbers_on(document: ExtractedDocument, page_numbers: Collection[int] | None) -> set[int]:
+    pages = [
+        page
+        for page in document.pages
+        if _checkable(page) and (page_numbers is None or page.number in page_numbers)
+    ]
+    return _source_item_numbers(pages)
 
 
 def _source_item_numbers(pages: Iterable[DocumentPage]) -> set[int]:

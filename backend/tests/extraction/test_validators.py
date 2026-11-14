@@ -5,7 +5,7 @@ import pytest
 from app.extraction.schema import ExtractedQuestionnaire
 from app.extraction.validators import questionnaire_rules
 
-RULES = questionnaire_rules(page_count=2)
+RULES = questionnaire_rules(pages=[1, 2])
 
 
 def _item(**fields: Any) -> dict[str, Any]:  # noqa: ANN401
@@ -54,10 +54,13 @@ def test_item_numbers_must_be_unique() -> None:
     assert _errors(_item(), _item()) == ["Item numbers 1 are repeated; numbers must be unique."]
 
 
-def test_page_must_exist() -> None:
-    assert _errors(_item(pagina=3)) == [
-        "items[0] (numero 1): pagina 3 does not exist; the document has 2 pages."
-    ]
+def test_item_must_start_on_the_pages_to_extract() -> None:
+    message = (
+        "items[0] (numero 1): pagina 3 is outside the pages to extract (1-2); extract only "
+        "items that start on them."
+    )
+
+    assert _errors(_item(pagina=3)) == [message]
 
 
 @pytest.mark.parametrize(

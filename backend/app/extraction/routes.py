@@ -62,5 +62,6 @@ def _set_run_headers(response: Response, outcome: ExtractionOutcome) -> None:
     response.headers["X-LLM-Output-Tokens"] = str(outcome.output_tokens)
     response.headers["X-LLM-Repairs"] = str(outcome.repairs)
     response.headers["X-LLM-Duration-Ms"] = str(outcome.llm_duration_ms)
+    response.headers["X-Extraction-Parts"] = str(outcome.parts)
     warnings = list(outcome.warnings[:MAX_WARNING_HEADER_ITEMS])
     response.headers["X-Extraction-Warnings"] = json.dumps(warnings, ensure_ascii=True)
