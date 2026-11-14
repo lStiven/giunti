@@ -6,6 +6,8 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import SecretStr, ValidationError
 
+from app.auth.dependencies import AuthenticatedClient, require_client
+from app.auth.rate_limit import Quota
 from app.core.config import (
     DEFAULT_CATALOG_FILE,
     LLMCatalog,
@@ -49,6 +51,9 @@ def _settings(**keys: str) -> Settings:
 
 def _get_models(settings: Settings) -> Any:  # noqa: ANN401 - raw JSON body
     app.dependency_overrides[get_settings] = lambda: settings
+    app.dependency_overrides[require_client] = lambda: AuthenticatedClient(
+        id="test", quota=Quota(per_minute=100, daily=100)
+    )
     try:
         response = TestClient(app).get("/api/v1/models")
     finally:

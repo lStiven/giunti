@@ -85,8 +85,8 @@ build-image:
 
 # Create an API key for a client
 [group('admin')]
-create-key client daily_limit="100":
-    uv run python -m app.auth.create_key --client {{ client }} --daily-limit {{ daily_limit }}
+create-key client daily_limit="100" per_minute_limit="10":
+    uv run python -m app.auth.create_key --client {{ client }} --daily-limit {{ daily_limit }} --per-minute-limit {{ per_minute_limit }}
 
 # Remove caches
 [group('admin')]

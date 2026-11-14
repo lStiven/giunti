@@ -1,0 +1,251 @@
+from collections.abc import Iterator
+from dataclasses import dataclass
+from datetime import UTC, datetime
+
+import pytest
+from fastapi import Response
+from fastapi.testclient import TestClient
+from pydantic import SecretStr
+
+from app.auth.create_key import main as create_key_main
+from app.auth.dependencies import AuthenticatedClient, get_rate_limiter, require_extraction_quota
+from app.auth.keys import client_id_of, generate_key, hash_key, key_matches
+from app.auth.rate_limit import Quota, RateLimiter
+from app.core.config import ApiKeyEntry, LLMCatalog, Settings, get_settings
+from app.core.errors import AppError, ErrorCode
+from app.main import app
+
+PEPPER = "p" * 40
+CATALOG = LLMCatalog.model_validate(
+    {
+        "default_model": "flash",
+        "providers": {"gemini": {"label": "Gemini", "description": "d"}},
+        "models": [{"id": "flash", "model": "gemini/flash"}],
+    }
+)
+ACME_KEY = generate_key("acme")
+OFF_KEY = generate_key("off")
+
+
+def _settings() -> Settings:
+    return Settings(
+        api_key_pepper=SecretStr(PEPPER),
+        api_keys=[
+            ApiKeyEntry(id="acme", hash=hash_key(ACME_KEY, PEPPER), daily_limit=5),
+            ApiKeyEntry(id="off", hash=hash_key(OFF_KEY, PEPPER), active=False),
+        ],
+        llm_catalog=CATALOG,
+        gemini_api_key=SecretStr("g"),
+    )
+
+
+@pytest.fixture(autouse=True)
+def _auth_settings() -> Iterator[None]:
+    app.dependency_overrides[get_settings] = _settings
+    yield
+    app.dependency_overrides.clear()
+
+
+def _headers(key: str | None) -> dict[str, str]:
+    return {"X-API-Key": key} if key is not None else {}
+
+
+@dataclass
+class FakeClock:
+    now: float
+
+    def __call__(self) -> float:
+        return self.now
+
+
+def _at(text: str) -> FakeClock:
+    return FakeClock(datetime.fromisoformat(text).replace(tzinfo=UTC).timestamp())
+
+
+def _rate_limited(limiter: RateLimiter, quota: Quota) -> AppError:
+    with pytest.raises(AppError) as error:
+        limiter.consume("acme", quota)
+    assert error.value.code is ErrorCode.RATE_LIMITED
+    return error.value
+
+
+def test_generated_keys_embed_the_client_and_are_unique() -> None:
+    key = generate_key("acme")
+
+    assert key.startswith("gk_acme_")
+    assert client_id_of(key) == "acme"
+    assert generate_key("acme") != key
+
+
+@pytest.mark.parametrize("key", ["", "acme", "gk_acme", "gk__secret", "xx_acme_secret", "gk_A_x"])
+def test_malformed_keys_have_no_client(key: str) -> None:
+    assert client_id_of(key) is None
+
+
+def test_invalid_client_ids_are_rejected_when_generating() -> None:
+    with pytest.raises(ValueError, match="Invalid client id"):
+        generate_key("Acme Corp")
+
+
+def test_key_hash_depends_on_the_pepper_and_verifies_only_the_right_key() -> None:
+    digest = hash_key(ACME_KEY, PEPPER)
+
+    assert key_matches(ACME_KEY, digest, PEPPER)
+    assert not key_matches(OFF_KEY, digest, PEPPER)
+    assert hash_key(ACME_KEY, "other pepper") != digest
+
+
+def test_valid_key_is_accepted() -> None:
+    assert TestClient(app).get("/api/v1/models", headers=_headers(ACME_KEY)).status_code == 200
+
+
+def test_missing_key_is_unauthenticated() -> None:
+    response = TestClient(app).get("/api/v1/models", headers=_headers(None))
+
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "UNAUTHENTICATED"
+    assert "X-API-Key" in response.json()["error"]["message"]
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "not-a-key",
+        generate_key("ghost"),
+        ACME_KEY[:-1] + ("A" if ACME_KEY[-1] != "A" else "B"),
+    ],
+    ids=["malformed", "unknown client", "wrong secret"],
+)
+def test_bad_keys_get_the_same_error(key: str) -> None:
+    response = TestClient(app).get("/api/v1/models", headers=_headers(key))
+
+    assert response.status_code == 401
+    assert response.json()["error"]["message"] == "The API key is not valid."
+
+
+def test_disabled_key_is_forbidden() -> None:
+    response = TestClient(app).get("/api/v1/models", headers=_headers(OFF_KEY))
+
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "FORBIDDEN"
+
+
+def test_listing_models_does_not_consume_quota() -> None:
+    limiter = RateLimiter()
+    app.dependency_overrides[get_rate_limiter] = lambda: limiter
+
+    for _ in range(10):
+        assert TestClient(app).get("/api/v1/models", headers=_headers(ACME_KEY)).status_code == 200
+
+
+def test_extraction_without_key_is_rejected_before_reading_the_document() -> None:
+    response = TestClient(app).post(
+        "/api/v1/questionnaires", files={"file": ("t.pdf", b"%PDF-1.4")}
+    )
+
+    assert response.status_code == 401
+
+
+def test_extraction_quota_is_consumed_and_reported_in_headers() -> None:
+    client = AuthenticatedClient(id="acme", quota=Quota(per_minute=10, daily=5))
+    response = Response()
+
+    require_extraction_quota(response, client, RateLimiter())
+
+    assert response.headers["X-RateLimit-Limit-Day"] == "5"
+    assert response.headers["X-RateLimit-Remaining-Day"] == "4"
+
+
+def test_requests_over_the_per_minute_limit_wait_for_the_window() -> None:
+    clock = _at("2026-11-14T10:00:00")
+    limiter = RateLimiter(clock)
+    quota = Quota(per_minute=2, daily=100)
+    limiter.consume("acme", quota)
+    clock.now += 20
+    limiter.consume("acme", quota)
+
+    error = _rate_limited(limiter, quota)
+
+    assert error.retry_after_s == 40
+    clock.now += 40
+    assert limiter.consume("acme", quota).daily_remaining == 97
+
+
+def test_daily_limit_resets_at_utc_midnight() -> None:
+    clock = _at("2026-11-14T23:00:00")
+    limiter = RateLimiter(clock)
+    quota = Quota(per_minute=100, daily=1)
+    limiter.consume("acme", quota)
+
+    error = _rate_limited(limiter, quota)
+
+    assert error.retry_after_s == 3600
+    assert "Daily limit of 1" in error.message
+    clock.now += 3600
+    assert limiter.consume("acme", quota).daily_remaining == 0
+
+
+def test_clients_have_independent_limits() -> None:
+    limiter = RateLimiter(_at("2026-11-14T10:00:00"))
+    quota = Quota(per_minute=1, daily=1)
+    limiter.consume("acme", quota)
+
+    assert limiter.consume("other", quota).daily_remaining == 0
+
+
+def test_rate_limited_response_has_retry_after_header() -> None:
+    limiter = RateLimiter(_at("2026-11-14T10:00:00"))
+    app.dependency_overrides[get_rate_limiter] = lambda: limiter
+    headers = {"X-API-Key": ACME_KEY}
+    client = TestClient(app)
+    for _ in range(5):
+        limiter.consume("acme", Quota(per_minute=100, daily=5))
+
+    response = client.post(
+        "/api/v1/questionnaires", files={"file": ("t.pdf", b"%PDF-1.4")}, headers=headers
+    )
+
+    assert response.status_code == 429
+    assert response.json()["error"]["code"] == "RATE_LIMITED"
+    assert int(response.headers["Retry-After"]) > 0
+
+
+def test_create_key_prints_a_key_that_verifies_against_its_entry(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = create_key_main(["--client", "newco", "--daily-limit", "7"], settings=_settings())
+
+    output = capsys.readouterr().out.splitlines()
+    key = output[1]
+    entry = ApiKeyEntry.model_validate_json(output[-1])
+    assert exit_code == 0
+    assert entry.id == "newco"
+    assert entry.daily_limit == 7
+    assert key_matches(key, entry.hash, PEPPER)
+
+
+@pytest.mark.parametrize(
+    ("args", "settings", "message"),
+    [
+        (["--client", "acme"], _settings(), "already exists"),
+        (["--client", "newco"], Settings(api_key_pepper=SecretStr("")), "API_KEY_PEPPER is empty"),
+        (["--client", "Bad Id"], _settings(), "Invalid client id"),
+    ],
+)
+def test_create_key_refuses_unsafe_or_duplicated_keys(
+    args: list[str], settings: Settings, message: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert create_key_main(args, settings=settings) == 1
+    assert message in capsys.readouterr().err
+
+
+def test_production_requires_a_strong_pepper() -> None:
+    with pytest.raises(ValueError, match="API_KEY_PEPPER"):
+        Settings(app_env="production", api_key_pepper=SecretStr("change-me-to-a-long-random"))
+
+
+def test_duplicated_client_ids_are_rejected() -> None:
+    entry = ApiKeyEntry(id="acme", hash="0" * 64)
+
+    with pytest.raises(ValueError, match="duplicated client ids: acme"):
+        Settings(api_keys=[entry, entry])

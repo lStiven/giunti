@@ -35,13 +35,20 @@ just up                                # todo junto con docker compose → http:
 | Endpoint | Qué hace |
 |---|---|
 | `GET /api/v1/models` | Modelos disponibles agrupados por proveedor, con su descripción y el modelo por defecto. Solo aparecen los modelos cuyo proveedor tiene API key configurada. |
-| `POST /api/v1/questionnaires` | Recibe un archivo (`file`, multipart) y opcionalmente el modelo (`model`, un `id` de `GET /models`). Devuelve el JSON del cuestionario. |
+| `POST /api/v1/questionnaires` | Recibe un archivo (`file`, multipart) y opcionalmente el modelo (`model`, un `id` de `GET /models`). Devuelve el JSON del cuestionario. Consume una unidad de la cuota diaria del cliente. |
+| `GET /health` | Estado del servicio (sin autenticación). |
+
+Ambos endpoints de `/api/v1` exigen la API key del cliente en el header `X-API-Key`:
 
 ```bash
-curl -F file=@cuestionario.pdf -F model=gemini-flash http://localhost:8080/api/v1/questionnaires
+just backend::create-key acme 100 10      # cliente, límite diario, límite por minuto
+# → imprime la key (una sola vez) y la entrada JSON para agregar a API_KEYS en backend/.env
+
+curl -H "X-API-Key: gk_acme_..." -F file=@cuestionario.pdf -F model=gemini-flash \
+  http://localhost:8080/api/v1/questionnaires
 ```
 
-La respuesta del `POST` incluye headers con datos de la ejecución: `X-LLM-Model`, `X-LLM-Input-Tokens`, `X-LLM-Output-Tokens`, `X-LLM-Repairs`, `X-LLM-Duration-Ms` y `X-Extraction-Warnings` (lista JSON de advertencias: contenido que no se pudo verificar contra el documento, páginas escaneadas, etc.). Los errores siguen el formato `{"error": {"code", "message", "request_id"}}`.
+La respuesta del `POST` incluye headers con datos de la ejecución: `X-LLM-Model`, `X-LLM-Input-Tokens`, `X-LLM-Output-Tokens`, `X-LLM-Repairs`, `X-LLM-Duration-Ms`, `X-Extraction-Warnings` (lista JSON de advertencias: contenido que no se pudo verificar contra el documento, páginas escaneadas, etc.) y `X-RateLimit-Remaining-Day`. Los errores siguen el formato `{"error": {"code", "message", "request_id"}}`; al superar un límite se responde `429 RATE_LIMITED` con `Retry-After`.
 
 Los modelos se configuran en [backend/llm_catalog.toml](backend/llm_catalog.toml) y las API keys en `backend/.env` (`GEMINI_API_KEY`, `LLM_API_KEYS`).
 

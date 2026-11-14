@@ -12,6 +12,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, Response, UploadFile
 
 from app.api.error_handlers import ErrorResponse
+from app.auth.dependencies import require_extraction_quota
 from app.core.config import get_settings
 from app.documents.security import BYTES_PER_MB
 from app.extraction.schema import Questionnaire
@@ -33,6 +34,7 @@ def get_extractor() -> QuestionnaireExtractor:
 @router.post(
     "/questionnaires",
     response_model=Questionnaire,
+    dependencies=[Depends(require_extraction_quota)],
     responses={
         status: {"model": ErrorResponse} for status in (401, 403, 413, 415, 422, 429, 500, 502, 503)
     },

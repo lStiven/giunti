@@ -6,6 +6,8 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from app.auth.dependencies import AuthenticatedClient, require_extraction_quota
+from app.auth.rate_limit import Quota
 from app.core.config import LLMCatalog, LLMModelConfig, ProviderInfo, Settings
 from app.extraction.routes import get_extractor
 from app.extraction.service import QuestionnaireExtractor
@@ -69,6 +71,9 @@ def _install(backend: ScriptedBackend, models: Sequence[LLMModelConfig] = (FLASH
     )
     runner = StructuredRunner(catalog, backend, max_retries=0, repair_attempts=1)
     app.dependency_overrides[get_extractor] = lambda: QuestionnaireExtractor(runner, SETTINGS)
+    app.dependency_overrides[require_extraction_quota] = lambda: AuthenticatedClient(
+        id="test", quota=Quota(per_minute=100, daily=100)
+    )
 
 
 @pytest.fixture(autouse=True)

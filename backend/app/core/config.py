@@ -101,14 +101,19 @@ def load_catalog(path: Path) -> LLMCatalog:
         raise ValueError(message) from exc
 
 
+CLIENT_ID_PATTERN = r"^[a-z0-9][a-z0-9-]{0,31}$"
+MIN_PEPPER_LENGTH = 32
+PEPPER_PLACEHOLDER_PREFIX = "change-me"
+
+
 class ApiKeyEntry(BaseModel):
     """An authorized client. Only the HMAC hash of its key is stored."""
 
-    id: str
-    hash: str
+    id: str = Field(pattern=CLIENT_ID_PATTERN)
+    hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     active: bool = True
-    per_minute_limit: int = 10
-    daily_limit: int = 100
+    per_minute_limit: int = Field(default=10, ge=1)
+    daily_limit: int = Field(default=100, ge=1)
 
 
 class Settings(BaseSettings):
@@ -147,6 +152,25 @@ class Settings(BaseSettings):
         if not self.llm_catalog.models and self.llm_catalog_file.is_file():
             self.llm_catalog = load_catalog(self.llm_catalog_file)
         return self
+
+    @model_validator(mode="after")
+    def _check_api_keys(self) -> Self:
+        ids = [entry.id for entry in self.api_keys]
+        duplicated = sorted({client for client in ids if ids.count(client) > 1})
+        if duplicated:
+            message = f"API_KEYS has duplicated client ids: {', '.join(duplicated)}"
+            raise ValueError(message)
+        if self.app_env == "production" and not self.has_secure_pepper():
+            message = (
+                f"API_KEY_PEPPER must be a random secret of at least {MIN_PEPPER_LENGTH} "
+                "characters in production"
+            )
+            raise ValueError(message)
+        return self
+
+    def has_secure_pepper(self) -> bool:
+        pepper = self.api_key_pepper.get_secret_value()
+        return len(pepper) >= MIN_PEPPER_LENGTH and not pepper.startswith(PEPPER_PLACEHOLDER_PREFIX)
 
     def llm_api_key(self, provider: str) -> str | None:
         """The provider's API key, or None when it is missing or empty."""

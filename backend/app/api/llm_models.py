@@ -9,6 +9,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from app.auth.dependencies import require_client
 from app.core.config import LLMCatalog, Settings, get_settings
 from app.core.errors import AppError, ErrorCode
 
@@ -64,6 +65,6 @@ def catalog_response(catalog: LLMCatalog) -> ModelCatalogResponse:
     return ModelCatalogResponse(default_model=catalog.default_model, providers=providers)
 
 
-@router.get("/models")
+@router.get("/models", dependencies=[Depends(require_client)])
 def list_models(settings: Annotated[Settings, Depends(get_settings)]) -> ModelCatalogResponse:
     return catalog_response(settings.enabled_llm_catalog())
