@@ -216,12 +216,13 @@ Cuando el enunciado admite más de una interpretación, se elige la más razonab
 </details>
 
 <details>
-<summary><b>Errores, acceso y despliegue</b> (S18, S19, S21, S23)</summary>
+<summary><b>Errores, acceso, modelos y despliegue</b> (S18, S19, S21, S23, S24)</summary>
 
 | # | Ambigüedad | Supuesto | Por qué |
 |---|---|---|---|
 | S18 | ¿Cómo informar los errores? | JSON `{"error": {"code", "message", "request_id"}}` con códigos estables en inglés y el código HTTP correspondiente (por ejemplo, 422 `NO_ITEMS` si no se detectan ítems, 415 `UNSUPPORTED_FORMAT` si el formato no es válido). | El cliente puede reaccionar al código sin interpretar textos, y el `request_id` permite rastrear el caso en los logs. |
 | S19 | El módulo de autenticación no define usuarios. | Acceso con **API key** por cliente, tanto para el frontend como para integraciones por API. | Los clientes de prueba no necesitan registro, roles ni historial. |
+| S24 | ¿Puede el cliente elegir cuánto razona el modelo? | Sí: modo **`fast`** (rápido, por defecto) o **`precise`** (preciso), por petición. Si el modelo elegido no ofrece el modo rápido, se usa el preciso, y el header `X-LLM-Mode` informa el modo real. | El razonamiento interno domina el tiempo y el costo: en Saber 11 Inglés el modo rápido tardó 8 veces menos y generó 8,6 veces menos tokens, con la misma precisión. Los documentos difíciles pueden necesitar el preciso, y solo quien los conoce sabe cuándo. |
 | S21 | ¿Qué modelo se usa si el cliente no elige uno? | El `default_model` del catálogo (Gemini Flash); si su proveedor no tiene API key, el primer modelo habilitado. Nunca hay fallback: si el modelo falla, se devuelve el error. | Las integraciones por API no quedan obligadas a enviar el modelo, y el cliente siempre sabe qué modelo produjo el resultado (header `X-LLM-Model`). |
 | S23 | ¿Cómo se despliega en un servidor y con qué configuración? | **Docker Compose en un solo servidor, siempre en modo producción**, detrás de un proxy inverso con HTTPS que el equipo pone (Caddy recomendado). El puerto de la aplicación puede limitarse a la propia máquina (`APP_BIND_ADDRESS=127.0.0.1`). | La extracción es síncrona y tarda minutos: un solo servidor sin límite de tiempo por petición es lo más simple que funciona. Forzar producción en el compose evita desplegar por descuido con un secreto de ejemplo. El despliegue en la nube queda pendiente. |
 

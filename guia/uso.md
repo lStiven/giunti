@@ -60,10 +60,12 @@ Los contadores diarios se reinician a las 00:00 UTC. Cada extracción solicitada
 
 1. **Entrar:** abrir el enlace de invitación. El navegador recuerda la clave; no hay que escribirla.
 2. **Elegir el archivo:** arrastrarlo o seleccionarlo. Acepta PDF, Word (`.docx`) y Excel (`.xlsx`) de hasta 20 MB y 60 páginas.
-3. **Elegir el modelo:** el marcado como **Recomendado** sirve para la mayoría de los casos. Solo aparecen los modelos cuyo proveedor tiene API key configurada.
+3. **Elegir el modelo y el modo:** el modelo marcado como **Recomendado** sirve para la mayoría de los casos. Solo aparecen los modelos cuyo proveedor tiene API key configurada. Si el modelo lo permite, debajo se elige el **modo de lectura**:
+   - **Rápido** (por defecto): el modelo razona lo justo. Tarda segundos o un par de minutos y consume mucho menos.
+   - **Preciso**: el modelo razona más antes de responder. Úsalo con documentos difíciles (escaneados, con figuras o con la clave de respuestas en imagen) o si el modo rápido dejó dudas. Puede tardar varios minutos y cuesta varias veces más.
 4. **Extraer preguntas:** suele tardar entre 1 y 3 minutos; un documento largo, más. Mientras espera, la página muestra el tiempo transcurrido y se puede **Cancelar**.
 5. **Revisar:** cada pregunta aparece como tarjeta, con la respuesta correcta resaltada. Las **advertencias** señalan lo que no se pudo verificar contra el documento. Con un botón se cambia a la vista **JSON**, para copiarlo o descargarlo.
-6. **Comparar:** **Probar con otro modelo** repite la extracción con otro modelo sin volver a subir el archivo.
+6. **Comparar:** **Probar con otro modelo** vuelve a la elección de modelo y modo, sin volver a subir el archivo. El resumen del resultado indica qué modelo y qué modo se usaron.
 
 Los archivos se procesan en memoria y se descartan: el servidor no guarda documentos ni resultados.
 
@@ -82,13 +84,15 @@ curl -H "X-API-Key: gk_colegio-san-jose_…" \
   http://localhost:8000/api/v1/questionnaires
 ```
 
-`model` es opcional: sin él se usa el modelo por defecto. Sus valores posibles son los `id` que devuelve `GET /api/v1/models`. Para ver además los headers de la respuesta, agrega `-i` a `curl`. Usa un tiempo de espera de al menos 15 minutos en tu cliente HTTP: los documentos largos tardan.
+`model` es opcional: sin él se usa el modelo por defecto. Sus valores posibles son los `id` que devuelve `GET /api/v1/models`.
+
+`mode` también es opcional: `fast` (rápido) o `precise` (preciso). Sin él se usa el `default_mode` del catálogo. `GET /api/v1/models` indica en `modes` cuáles ofrece cada modelo. Si un modelo no ofrece `fast`, se usa `precise`, y el header `X-LLM-Mode` informa el modo que realmente corrió. Por ejemplo, para el modo preciso agrega `-F mode=precise`. Para ver además los headers de la respuesta, agrega `-i` a `curl`. Usa un tiempo de espera de al menos 15 minutos en tu cliente HTTP: los documentos largos tardan.
 
 ### Endpoints
 
 | Endpoint | Qué hace |
 |---|---|
-| `GET /api/v1/models` | Modelos disponibles agrupados por proveedor, con su descripción y el modelo por defecto. Solo aparecen los modelos cuyo proveedor tiene API key configurada. No consume cuota. |
+| `GET /api/v1/models` | Modelos disponibles agrupados por proveedor, con su descripción, los modos que ofrece cada uno (`modes`), el modelo por defecto y el modo por defecto (`default_mode`). Solo aparecen los modelos cuyo proveedor tiene API key configurada. No consume cuota. |
 | `POST /api/v1/questionnaires` | Recibe un archivo (`file`, multipart) y opcionalmente el modelo (`model`, un `id` de `GET /models`). Devuelve el JSON del cuestionario. Consume una unidad de la cuota diaria del cliente. |
 | `/api/v1/admin/clients` | Panel de administración: listar, crear (`POST`), editar (`PATCH /{id}`: nombre, límites, activar/desactivar), reemplazar la clave (`POST /{id}/key`) y eliminar (`DELETE /{id}`, salvo administradores). Solo con clave de administrador. |
 | `GET /health` | Estado del servicio (sin autenticación). Solo en el backend: nginx no lo publica. |
@@ -100,6 +104,7 @@ La respuesta del `POST` incluye headers con datos de la ejecución:
 | Header | Contenido |
 |---|---|
 | `X-LLM-Model` | Modelo que produjo el resultado |
+| `X-LLM-Mode` | Modo de razonamiento que se usó: `fast` o `precise` |
 | `X-LLM-Input-Tokens` / `X-LLM-Output-Tokens` | Tokens consumidos, sumando todas las llamadas |
 | `X-LLM-Repairs` | Cuántas veces se pidió al modelo corregir su respuesta |
 | `X-LLM-Duration-Ms` | Tiempo total en el modelo |

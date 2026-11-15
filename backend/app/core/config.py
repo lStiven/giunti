@@ -14,6 +14,9 @@ from pydantic import BaseModel, Field, SecretStr, ValidationError, model_validat
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 type ReasoningEffort = Literal["minimal", "low", "medium", "high"]
+# How much the model reasons: "fast" uses the model's fast_reasoning_effort, "precise" its
+# reasoning_effort (the provider default when unset).
+type ReasoningMode = Literal["fast", "precise"]
 
 DEFAULT_CATALOG_FILE = Path(__file__).resolve().parents[2] / "llm_catalog.toml"
 
@@ -39,7 +42,12 @@ class LLMModelConfig(BaseModel):
     temperature: float | None = Field(
         default=None, description="None keeps the provider default (recommended for Gemini 3)"
     )
-    reasoning_effort: ReasoningEffort | None = None
+    reasoning_effort: ReasoningEffort | None = Field(
+        default=None, description="Precise mode; None keeps the provider default"
+    )
+    fast_reasoning_effort: ReasoningEffort | None = Field(
+        default=None, description="Fast mode; the model offers only the precise mode when unset"
+    )
     json_mode: bool = Field(
         default=True, description="Ask the provider for JSON-only output when it supports it"
     )
@@ -48,11 +56,26 @@ class LLMModelConfig(BaseModel):
     def provider(self) -> str:
         return self.model.split("/", 1)[0]
 
+    @property
+    def modes(self) -> tuple[ReasoningMode, ...]:
+        return ("fast", "precise") if self.fast_reasoning_effort is not None else ("precise",)
+
+    def effective_mode(self, requested: ReasoningMode) -> ReasoningMode:
+        """The requested mode, or "precise" when the model has no fast mode."""
+        return requested if requested in self.modes else "precise"
+
+    def in_mode(self, mode: ReasoningMode) -> "LLMModelConfig":
+        """This model with the reasoning effort of the mode."""
+        if self.effective_mode(mode) == "fast":
+            return self.model_copy(update={"reasoning_effort": self.fast_reasoning_effort})
+        return self
+
 
 class LLMCatalog(BaseModel):
     """Models clients can choose from. There is no fallback: each request uses one model."""
 
     default_model: str = ""
+    default_mode: ReasoningMode = "precise"
     providers: dict[str, ProviderInfo] = {}
     models: list[LLMModelConfig] = []
 
@@ -89,7 +112,12 @@ class LLMCatalog(BaseModel):
             if self.default_model in enabled_ids
             else (models[0].id if models else "")
         )
-        return LLMCatalog(default_model=default_model, providers=providers, models=models)
+        return LLMCatalog(
+            default_model=default_model,
+            default_mode=self.default_mode,
+            providers=providers,
+            models=models,
+        )
 
 
 def load_catalog(path: Path) -> LLMCatalog:

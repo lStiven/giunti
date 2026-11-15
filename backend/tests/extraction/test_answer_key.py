@@ -122,7 +122,9 @@ async def test_no_extra_call_when_every_answerable_item_has_an_answer() -> None:
     backend = ScriptedBackend(_never)
     questionnaire = _questionnaire(_mc(1, ["A"]), _mc(2, ["B"]))
 
-    fill = await fill_from_answer_key(_runner(backend), KEY_DOCUMENT, questionnaire, "flash")
+    fill = await fill_from_answer_key(
+        _runner(backend), KEY_DOCUMENT, questionnaire, "flash", "precise"
+    )
 
     assert backend.calls == 0
     assert fill.questionnaire == questionnaire
@@ -134,7 +136,7 @@ async def test_no_extra_call_without_answer_key_pages() -> None:
     questionnaire = _questionnaire(_mc(1))
 
     fill = await fill_from_answer_key(
-        _runner(backend), _document("1. Domanda 1"), questionnaire, "flash"
+        _runner(backend), _document("1. Domanda 1"), questionnaire, "flash", "precise"
     )
 
     assert backend.calls == 0
@@ -147,7 +149,9 @@ async def test_fills_only_the_items_without_answer_and_keeps_the_found_ones() ->
     )
     questionnaire = _questionnaire(_mc(1, ["A"]), _mc(2, page=2))
 
-    fill = await fill_from_answer_key(_runner(backend), KEY_DOCUMENT, questionnaire, "flash")
+    fill = await fill_from_answer_key(
+        _runner(backend), KEY_DOCUMENT, questionnaire, "flash", "precise"
+    )
 
     first, second = fill.questionnaire.items
     assert first == questionnaire.items[0]
@@ -162,7 +166,7 @@ async def test_the_key_call_carries_the_key_pages_with_images_and_the_pending_it
     backend = ScriptedBackend(_key_reply())
     questionnaire = _questionnaire(_mc(1, ["A"]), _mc(2, page=2))
 
-    await fill_from_answer_key(_runner(backend), KEY_DOCUMENT, questionnaire, "flash")
+    await fill_from_answer_key(_runner(backend), KEY_DOCUMENT, questionnaire, "flash", "precise")
 
     parts = backend.key_calls[0][-1].parts
     texts = " ".join(part.text for part in parts if isinstance(part, TextPart))
@@ -187,7 +191,7 @@ async def test_matching_pairs_are_written_with_the_item_values() -> None:
     )
 
     fill = await fill_from_answer_key(
-        _runner(backend), KEY_DOCUMENT, _questionnaire(matching), "flash"
+        _runner(backend), KEY_DOCUMENT, _questionnaire(matching), "flash", "precise"
     )
 
     assert fill.questionnaire.items[0].correct_answer == ["1-a", "2-b"]
@@ -199,7 +203,7 @@ async def test_items_the_key_does_not_answer_are_reported() -> None:
     )
 
     fill = await fill_from_answer_key(
-        _runner(backend), KEY_DOCUMENT, _questionnaire(_mc(1), _mc(2)), "flash"
+        _runner(backend), KEY_DOCUMENT, _questionnaire(_mc(1), _mc(2)), "flash", "precise"
     )
 
     assert fill.questionnaire.items[0].correct_answer == ["A"]
@@ -216,7 +220,9 @@ async def test_an_answer_for_an_item_not_listed_keeps_the_questionnaire_unchange
     )
     questionnaire = _questionnaire(_mc(1))
 
-    fill = await fill_from_answer_key(_runner(backend), KEY_DOCUMENT, questionnaire, "flash")
+    fill = await fill_from_answer_key(
+        _runner(backend), KEY_DOCUMENT, questionnaire, "flash", "precise"
+    )
 
     assert fill.questionnaire == questionnaire
     assert fill.warnings[0].code is WarningCode.ANSWER_KEY_UNREAD
@@ -228,7 +234,9 @@ async def test_an_answer_that_is_not_an_alternative_keeps_the_questionnaire_unch
     )
     questionnaire = _questionnaire(_mc(1))
 
-    fill = await fill_from_answer_key(_runner(backend), KEY_DOCUMENT, questionnaire, "flash")
+    fill = await fill_from_answer_key(
+        _runner(backend), KEY_DOCUMENT, questionnaire, "flash", "precise"
+    )
 
     assert fill.questionnaire == questionnaire
     assert len(fill.warnings) == 1
@@ -241,7 +249,7 @@ async def test_a_failing_model_keeps_the_questionnaire_with_a_warning() -> None:
     questionnaire = _questionnaire(_mc(1))
 
     fill = await fill_from_answer_key(
-        _runner(ScriptedBackend(refuse)), KEY_DOCUMENT, questionnaire, "flash"
+        _runner(ScriptedBackend(refuse)), KEY_DOCUMENT, questionnaire, "flash", "precise"
     )
 
     assert fill.questionnaire == questionnaire

@@ -6,12 +6,14 @@ import { ErrorNotice } from "./components/ErrorNotice";
 import { FileDropzone } from "./components/FileDropzone";
 import { AlertIcon } from "./components/icons";
 import { ModelPicker } from "./components/ModelPicker";
+import { MODE_LABELS, ModePicker } from "./components/ModePicker";
 import { ProcessingView } from "./components/ProcessingView";
 import { ResultView } from "./components/ResultView";
-import { flowReducer, initialState, modelLabel, type FlowState } from "./flow";
+import { flowReducer, initialState, modelLabel, modelModes, type FlowState } from "./flow";
 import { takeKeyFromUrl } from "./invite";
 import { errorGuidance } from "./messages";
 import { forgetApiKey, loadApiKey, saveApiKey } from "./storage";
+import type { ReasoningMode } from "./types/questionnaire";
 
 const AUTH_ERRORS = new Set(["UNAUTHENTICATED", "FORBIDDEN"]);
 
@@ -62,6 +64,7 @@ export default function App(): ReactElement {
         apiKey,
         file: state.file,
         model: state.model,
+        mode: state.mode,
         signal: controller.signal,
       });
       dispatch({ type: "extractionSucceeded", result });
@@ -131,7 +134,10 @@ function Content({ state, dispatch, onExtract, onCancel }: ContentProps): ReactE
         <ResultView
           result={state.result}
           fileName={fileName}
-          modelLabel={modelLabel(state.catalog, state.result.run.model || model)}
+          modelLabel={withMode(
+            modelLabel(state.catalog, state.result.run.model || model),
+            state.result.run.mode,
+          )}
           onTryAnotherModel={() => {
             dispatch({ type: "tryAnotherModel" });
           }}
@@ -220,6 +226,15 @@ function SetupForm({ state, dispatch, onExtract }: Omit<ContentProps, "onCancel"
                 dispatch({ type: "modelChosen", model });
               }}
             />
+            {modelModes(state.catalog, state.model).includes("fast") && (
+              <ModePicker
+                selected={state.mode}
+                disabled={false}
+                onSelect={(mode) => {
+                  dispatch({ type: "modeChosen", mode });
+                }}
+              />
+            )}
           </Step>
           <div className="submit">
             <button
@@ -287,4 +302,8 @@ function asApiError(error: unknown): ApiRequestError {
     return error;
   }
   return new ApiRequestError("UNKNOWN", error instanceof Error ? error.message : String(error));
+}
+
+function withMode(label: string, mode: ReasoningMode | null): string {
+  return mode === null ? label : `${label} · ${MODE_LABELS[mode]}`;
 }

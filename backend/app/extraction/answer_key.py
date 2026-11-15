@@ -17,6 +17,7 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.core.config import ReasoningMode
 from app.core.errors import AppError
 from app.documents.models import DocumentPage, ExtractedDocument, PageSource
 from app.extraction.grounding import normalize
@@ -140,6 +141,7 @@ async def fill_from_answer_key(
     document: ExtractedDocument,
     questionnaire: ExtractedQuestionnaire,
     model_id: str,
+    mode: ReasoningMode,
 ) -> KeyFill:
     """The questionnaire with the answers the key gives for its pending items."""
     pending = pending_items(questionnaire)
@@ -153,6 +155,7 @@ async def fill_from_answer_key(
             answer_key_task(by_number),
             build_key_content(document, key_pages, pending),
             model_id=model_id,
+            mode=mode,
         )
     except AppError as error:
         numbers = tuple(item.number for item in pending)

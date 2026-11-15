@@ -20,6 +20,9 @@ from app.llm.structured import (
 FLASH = LLMModelConfig(id="flash", model="gemini/flash")
 OTHER = LLMModelConfig(id="other", model="other/model")
 TEXT_ONLY = LLMModelConfig(id="text-only", model="other/text-only", vision=False)
+TUNABLE = LLMModelConfig(
+    id="tunable", model="gemini/tunable", reasoning_effort="high", fast_reasoning_effort="low"
+)
 
 type Script = list[Completion | ModelCallError]
 
@@ -53,9 +56,11 @@ DOUBTFUL = Completion('{"title": "maybe", "count": 2}')
 class FakeBackend:
     scripts: dict[str, Script]
     calls: list[tuple[str, list[Message]]] = field(default_factory=list)
+    efforts: list[str | None] = field(default_factory=list)
 
     async def complete(self, model: LLMModelConfig, messages: Sequence[Message]) -> Completion:
         self.calls.append((model.id, list(messages)))
+        self.efforts.append(model.reasoning_effort)
         result = self.scripts[model.id].pop(0)
         if isinstance(result, ModelCallError):
             raise result
@@ -124,6 +129,36 @@ async def test_chosen_model_is_used() -> None:
 
     assert result.model_id == OTHER.id
     assert backend.models_called() == [OTHER.id]
+
+
+async def test_each_mode_uses_its_reasoning_effort() -> None:
+    backend = FakeBackend({TUNABLE.id: [VALID, VALID]})
+    runner = _runner(backend, (TUNABLE,))
+
+    await runner.run(TASK, CONTENT, mode="fast")
+    await runner.run(TASK, CONTENT, mode="precise")
+
+    assert backend.efforts == ["low", "high"]
+
+
+async def test_the_catalog_default_mode_applies_when_the_request_has_none() -> None:
+    backend = FakeBackend({TUNABLE.id: [VALID]})
+    catalog = _catalog((TUNABLE,)).model_copy(update={"default_mode": "fast"})
+    runner = StructuredRunner(catalog, backend, max_retries=0, repair_attempts=0)
+
+    await runner.run(TASK, CONTENT)
+
+    assert backend.efforts == ["low"]
+
+
+async def test_models_without_a_fast_mode_run_in_precise_mode() -> None:
+    backend = FakeBackend({FLASH.id: [VALID]})
+    runner = _runner(backend)
+
+    await runner.run(TASK, CONTENT, mode="fast")
+
+    assert runner.resolve_mode(FLASH, "fast") == "precise"
+    assert backend.efforts == [None]
 
 
 async def test_request_has_instructions_as_system_and_content_as_user() -> None:

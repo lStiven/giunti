@@ -6,8 +6,9 @@
 - `review`: soft checks (for example, grounding against the source). They are sent back to the
   model once, and if they persist the result is returned with them as warnings.
 
-`StructuredRunner.run(task, content, model_id=...)` uses only the chosen model (or the catalog
-default): there is no fallback, so clients can compare models. On that model it retries
+`StructuredRunner.run(task, content, model_id=..., mode=...)` uses only the chosen model (or the
+catalog default) in the chosen reasoning mode: there is no fallback, so clients can compare models
+and modes. On that model it retries
 transient failures with exponential backoff and asks it to fix concrete errors
 (`repair_attempts` times). Only models whose provider has an API key are enabled.
 
@@ -26,7 +27,7 @@ from dataclasses import dataclass, field
 
 from pydantic import BaseModel, ValidationError
 
-from app.core.config import LLMCatalog, LLMModelConfig, Settings
+from app.core.config import LLMCatalog, LLMModelConfig, ReasoningMode, Settings
 from app.core.errors import AppError, ErrorCode, ErrorReason
 from app.llm.circuit_breaker import BreakerRegistry
 from app.llm.client import (
@@ -192,9 +193,11 @@ class StructuredRunner:
         content: Sequence[ContentPart],
         *,
         model_id: str | None = None,
+        mode: ReasoningMode | None = None,
     ) -> StructuredResult[T]:
-        """Runs the task on the chosen model, or on the catalog default when None."""
+        """Runs the task on the chosen model and mode, or on the catalog defaults when None."""
         model = self.resolve_model(model_id)
+        model = model.in_mode(self.resolve_mode(model, mode))
         messages = _messages_for(model, task.instructions, content)
         if messages is None:
             message = f"The model '{model.id}' cannot read images, and this document needs it."
@@ -234,6 +237,10 @@ class StructuredRunner:
             output_tokens=usage.output_tokens,
             duration_ms=_ms(started),
         )
+
+    def resolve_mode(self, model: LLMModelConfig, mode: ReasoningMode | None) -> ReasoningMode:
+        """The mode that runs: the requested one (or the catalog default) if the model has it."""
+        return model.effective_mode(mode or self._catalog.default_mode)
 
     def resolve_model(self, model_id: str | None) -> LLMModelConfig:
         if not self._catalog.models:

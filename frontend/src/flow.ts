@@ -4,7 +4,7 @@
  * Every transition lives here, so components only render the state and dispatch actions.
  */
 import type { ApiRequestError } from "./api/client";
-import type { ExtractionResult, ModelCatalog } from "./types/questionnaire";
+import type { ExtractionResult, ModelCatalog, ReasoningMode } from "./types/questionnaire";
 
 export type Stage =
   "needsKey" | "checkingKey" | "unavailable" | "ready" | "processing" | "done" | "failed";
@@ -14,6 +14,7 @@ export interface FlowState {
   apiKey: string | null;
   catalog: ModelCatalog | null;
   model: string | null;
+  mode: ReasoningMode;
   file: File | null;
   result: ExtractionResult | null;
   error: ApiRequestError | null;
@@ -28,6 +29,7 @@ export type FlowAction =
   | { type: "keyChangeRequested" }
   | { type: "fileChosen"; file: File | null }
   | { type: "modelChosen"; model: string }
+  | { type: "modeChosen"; mode: ReasoningMode }
   | { type: "extractionStarted" }
   | { type: "extractionSucceeded"; result: ExtractionResult }
   | { type: "extractionFailed"; error: ApiRequestError }
@@ -41,6 +43,7 @@ export function initialState(apiKey: string | null): FlowState {
     apiKey,
     catalog: null,
     model: null,
+    mode: "fast",
     file: null,
     result: null,
     error: null,
@@ -57,6 +60,7 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
         stage: "ready",
         catalog: action.catalog,
         model: keptOrDefault(state.model, action.catalog),
+        mode: action.catalog.default_mode,
         error: null,
       };
     case "keyRejected":
@@ -71,6 +75,8 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
       return { ...state, file: action.file, error: null };
     case "modelChosen":
       return { ...state, model: action.model };
+    case "modeChosen":
+      return { ...state, mode: action.mode };
     case "extractionStarted":
       return { ...state, stage: "processing", result: null, error: null };
     case "extractionSucceeded":
@@ -91,6 +97,17 @@ function keptOrDefault(model: string | null, catalog: ModelCatalog): string | nu
     return model;
   }
   return available.includes(catalog.default_model) ? catalog.default_model : (available[0] ?? null);
+}
+
+/** The modes the model offers; models missing from the catalog offer only "precise". */
+export function modelModes(catalog: ModelCatalog | null, modelId: string | null): ReasoningMode[] {
+  for (const provider of catalog?.providers ?? []) {
+    const model = provider.models.find((candidate) => candidate.id === modelId);
+    if (model) {
+      return model.modes;
+    }
+  }
+  return ["precise"];
 }
 
 export function modelLabel(catalog: ModelCatalog | null, modelId: string): string {

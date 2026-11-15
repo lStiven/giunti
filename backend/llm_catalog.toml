@@ -23,10 +23,20 @@
 #   free               Uses a free plan (low limits; check the provider's data policy).
 #   vision             Can read page images. Required for scanned documents.
 #   max_output_tokens, max_input_tokens (optional, looked up in LiteLLM when missing),
-#   temperature (optional, provider default when missing), reasoning_effort (optional:
-#   minimal | low | medium | high), json_mode (default true).
+#   temperature (optional, provider default when missing), json_mode (default true).
+#   reasoning_effort       Precise mode (optional: minimal | low | medium | high; provider default
+#                          when missing).
+#   fast_reasoning_effort  Fast mode (same values). When missing the model offers only the
+#                          precise mode. Check the provider accepts the value; LiteLLM passes it
+#                          as reasoning_effort.
+#
+# Reasoning modes: clients choose "fast" or "precise" per request (default_mode when omitted).
+# Reasoning tokens are billed as output, so "fast" is much faster and cheaper. On the Saber 11
+# English test (25 pages), Gemini Flash took 73 s and 17k output tokens in fast mode against
+# 574 s and 145k in precise mode, with the same 50/50 items and answers (2026-11-15).
 
 default_model = "gemini-flash"
+default_mode = "fast"
 
 [providers.gemini]
 label = "Google Gemini"
@@ -43,6 +53,7 @@ description = "Modelos de DeepSeek, de bajo costo."
 [[models]]
 id = "gemini-flash"
 model = "gemini/gemini-3.8-flash"
+fast_reasoning_effort = "low"
 label = "Gemini 3.8 Flash"
 description = "Rápido y preciso leyendo documentos, incluidos los escaneados. Recomendado para la mayoría de los cuestionarios."
 vision = true
@@ -51,6 +62,8 @@ max_output_tokens = 32000
 [[models]]
 id = "gpt-terra"
 model = "openai/gpt-6.1-terra"
+# Accepts none | low | medium (default) | high | xhigh | max (OpenAI model page, 2026-11-15).
+fast_reasoning_effort = "low"
 label = "GPT-6.1 Terra"
 description = "Modelo de OpenAI pensado para razonamiento visual, rápido y eficiente. Lee documentos escaneados."
 vision = true
@@ -59,6 +72,8 @@ max_output_tokens = 32000
 [[models]]
 id = "deepseek-flash"
 model = "deepseek/deepseek-flash"
+# Accepts low | high (default) | max; thinking is on by default (DeepSeek API docs, 2026-11-15).
+fast_reasoning_effort = "low"
 label = "DeepSeek V4.1 Flash"
 description = "El más económico de los tres. Lee documentos escaneados."
 vision = true

@@ -6,11 +6,17 @@
  * TIMED_OUT (the connection dropped after a long wait, usually a proxy limit) and HTTP_<status>
  * (an error page from something in front of the API).
  */
-import type { ExtractionResult, ModelCatalog, RunInfo } from "../types/questionnaire";
+import type {
+  ExtractionResult,
+  ModelCatalog,
+  ReasoningMode,
+  RunInfo,
+} from "../types/questionnaire";
 import {
   apiErrorBody,
   isModelCatalog,
   isQuestionnaire,
+  isReasoningMode,
   parseNotices,
   type ErrorDetails,
 } from "./guards";
@@ -67,6 +73,7 @@ export interface ExtractionRequest {
   apiKey: string;
   file: File;
   model: string | null;
+  mode: ReasoningMode;
   signal?: AbortSignal;
 }
 
@@ -76,6 +83,7 @@ export async function extractQuestionnaire(request: ExtractionRequest): Promise<
   if (request.model !== null) {
     form.append("model", request.model);
   }
+  form.append("mode", request.mode);
   const started = Date.now();
   let response: Response;
   try {
@@ -164,12 +172,17 @@ export function invalidResponse(response: Response): ApiRequestError {
   );
 }
 
+function modeHeader(value: string | null): ReasoningMode | null {
+  return isReasoningMode(value) ? value : null;
+}
+
 function runInfo(headers: Headers): RunInfo {
   const count = (name: string): number => Number(headers.get(name) ?? 0) || 0;
   const remaining = headers.get("X-RateLimit-Remaining-Day");
   const notices = parseNotices(headers.get("X-Extraction-Warnings"));
   return {
     model: headers.get("X-LLM-Model") ?? "",
+    mode: modeHeader(headers.get("X-LLM-Mode")),
     durationMs: count("X-LLM-Duration-Ms"),
     inputTokens: count("X-LLM-Input-Tokens"),
     outputTokens: count("X-LLM-Output-Tokens"),

@@ -203,6 +203,7 @@ Los modelos se declaran en [backend/llm_catalog.toml](../backend/llm_catalog.tom
 | `deepseek-flash` | DeepSeek V4.1 Flash | DeepSeek | El más económico |
 
 - Los tres leen imágenes, así que sirven para documentos escaneados.
+- **Modos de razonamiento:** cada petición elige `fast` (rápido) o `precise` (preciso). Los modelos de hoy "piensan" antes de responder, y ese razonamiento se cobra como tokens de salida. En el cuadernillo de Inglés de Saber 11 (25 páginas), Gemini Flash tardó **73 s y 17 mil tokens de salida en rápido**, contra **574 s y 145 mil en preciso**, con los mismos 50/50 ítems y respuestas. El catálogo define el nivel de cada modo para cada modelo (`fast_reasoning_effort` y `reasoning_effort`). Los tres modelos ofrecen los dos modos: rápido = `low`; preciso = el valor por defecto de cada proveedor (`medium` en OpenAI, `high` en DeepSeek, el dinámico de Gemini).
 - Un modelo **solo está habilitado si su proveedor tiene API key** en `backend/.env`. Si ninguno la tiene, el servicio responde `503 NO_MODELS_AVAILABLE`.
 - **Agregar un modelo** es copiar un bloque `[[models]]` del catálogo; el archivo explica cada campo.
 

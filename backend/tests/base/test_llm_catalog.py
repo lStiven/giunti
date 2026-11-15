@@ -145,6 +145,7 @@ def test_models_endpoint_lists_enabled_models_by_provider_without_internal_detai
     assert response.status_code == 200
     assert response.json() == {
         "default_model": "flash",
+        "default_mode": "precise",
         "providers": [
             {
                 "id": "gemini",
@@ -158,6 +159,7 @@ def test_models_endpoint_lists_enabled_models_by_provider_without_internal_detai
                         "vision": True,
                         "free": False,
                         "is_default": True,
+                        "modes": ["precise"],
                     }
                 ],
             },
@@ -173,6 +175,7 @@ def test_models_endpoint_lists_enabled_models_by_provider_without_internal_detai
                         "vision": False,
                         "free": True,
                         "is_default": False,
+                        "modes": ["precise"],
                     }
                 ],
             },

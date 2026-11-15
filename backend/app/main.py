@@ -25,6 +25,7 @@ EXPOSED_HEADERS = [
     "X-RateLimit-Limit-Day",
     "X-RateLimit-Remaining-Day",
     "X-LLM-Model",
+    "X-LLM-Mode",
     "X-LLM-Input-Tokens",
     "X-LLM-Output-Tokens",
     "X-LLM-Repairs",

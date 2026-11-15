@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from app.auth.dependencies import require_client
-from app.core.config import LLMCatalog, Settings, get_settings
+from app.core.config import LLMCatalog, ReasoningMode, Settings, get_settings
 from app.core.errors import AppError, ErrorCode
 
 router = APIRouter(prefix="/api/v1", tags=["models"])
@@ -23,6 +23,8 @@ class ModelInfo(BaseModel):
     vision: bool
     free: bool
     is_default: bool
+    modes: list[ReasoningMode]
+    """Reasoning modes the model offers: always "precise", and "fast" when configured."""
 
 
 class ProviderModels(BaseModel):
@@ -35,6 +37,9 @@ class ProviderModels(BaseModel):
 class ModelCatalogResponse(BaseModel):
     default_model: str
     """Model id used when the request does not choose one."""
+
+    default_mode: ReasoningMode
+    """Mode used when the request does not choose one (precise for models without fast)."""
 
     providers: list[ProviderModels]
 
@@ -55,6 +60,7 @@ def catalog_response(catalog: LLMCatalog) -> ModelCatalogResponse:
                     vision=model.vision,
                     free=model.free,
                     is_default=model.id == catalog.default_model,
+                    modes=list(model.modes),
                 )
                 for model in catalog.models
                 if model.provider == provider_id
@@ -62,7 +68,11 @@ def catalog_response(catalog: LLMCatalog) -> ModelCatalogResponse:
         )
         for provider_id, provider in catalog.providers.items()
     ]
-    return ModelCatalogResponse(default_model=catalog.default_model, providers=providers)
+    return ModelCatalogResponse(
+        default_model=catalog.default_model,
+        default_mode=catalog.default_mode,
+        providers=providers,
+    )
 
 
 @router.get("/models", dependencies=[Depends(require_client)])

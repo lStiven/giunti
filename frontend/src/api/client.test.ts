@@ -27,7 +27,12 @@ describe("extractQuestionnaire", () => {
         }),
     });
 
-    const result = await extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: null });
+    const result = await extractQuestionnaire({
+      apiKey: API_KEY,
+      file: FILE,
+      model: null,
+      mode: "fast",
+    });
 
     expect(result.questionnaire).toEqual(QUESTIONNAIRE);
     expect(result.run).toMatchObject({
@@ -42,8 +47,8 @@ describe("extractQuestionnaire", () => {
   it("sends the key and the chosen model, and omits the model when none is chosen", async () => {
     const fetchStub = stubApi({ extract: () => json(QUESTIONNAIRE) });
 
-    await extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: "gpt-terra" });
-    await extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: null });
+    await extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: "gpt-terra", mode: "fast" });
+    await extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: null, mode: "fast" });
 
     const [withModel, withoutModel] = fetchStub.mock.calls.map(
       (call) => (call as [string, RequestInit])[1],
@@ -56,7 +61,12 @@ describe("extractQuestionnaire", () => {
   it("treats a malformed warnings header as no warnings", async () => {
     stubApi({ extract: () => json(QUESTIONNAIRE, 200, { "X-Extraction-Warnings": "not json" }) });
 
-    const result = await extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: null });
+    const result = await extractQuestionnaire({
+      apiKey: API_KEY,
+      file: FILE,
+      model: null,
+      mode: "fast",
+    });
 
     expect(result.run.warnings).toEqual([]);
     expect(result.run.dailyRemaining).toBeNull();
@@ -65,7 +75,9 @@ describe("extractQuestionnaire", () => {
   it("turns the backend error body into a coded error with the wait time", async () => {
     stubApi({ extract: () => apiError("RATE_LIMITED", 429, { "Retry-After": "120" }) });
 
-    const error = await failure(extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: null }));
+    const error = await failure(
+      extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: null, mode: "fast" }),
+    );
 
     expect(error.code).toBe("RATE_LIMITED");
     expect(error.status).toBe(429);
@@ -82,7 +94,9 @@ describe("extractQuestionnaire", () => {
         }),
     });
 
-    const error = await failure(extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: null }));
+    const error = await failure(
+      extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: null, mode: "fast" }),
+    );
 
     expect(error.code).toBe("HTTP_502");
     expect(error.requestId).toBe("proxy-1");
@@ -91,7 +105,9 @@ describe("extractQuestionnaire", () => {
   it("rejects a successful response with an unexpected shape", async () => {
     stubApi({ extract: () => json({ items: "not a list" }) });
 
-    const error = await failure(extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: null }));
+    const error = await failure(
+      extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: null, mode: "fast" }),
+    );
 
     expect(error.code).toBe("INVALID_RESPONSE");
   });
@@ -99,7 +115,9 @@ describe("extractQuestionnaire", () => {
   it("reports an unreachable server as a network error", async () => {
     vi.stubGlobal("fetch", () => Promise.reject(new TypeError("Failed to fetch")));
 
-    const error = await failure(extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: null }));
+    const error = await failure(
+      extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: null, mode: "fast" }),
+    );
 
     expect(error.code).toBe("NETWORK_ERROR");
   });
@@ -107,7 +125,9 @@ describe("extractQuestionnaire", () => {
   it("reports a cancelled request as aborted", async () => {
     vi.stubGlobal("fetch", () => Promise.reject(new DOMException("Aborted", "AbortError")));
 
-    const error = await failure(extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: null }));
+    const error = await failure(
+      extractQuestionnaire({ apiKey: API_KEY, file: FILE, model: null, mode: "fast" }),
+    );
 
     expect(error.code).toBe("ABORTED");
   });

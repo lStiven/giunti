@@ -18,6 +18,7 @@ from tests.base.pdf_builders import questionnaire_pdf
 
 FLASH = LLMModelConfig(id="flash", model="gemini/flash")
 OTHER = LLMModelConfig(id="other", model="gemini/other")
+TUNABLE = LLMModelConfig(id="tunable", model="gemini/tunable", fast_reasoning_effort="low")
 SETTINGS = Settings(render_dpi=50, render_max_px=400, max_pages=5)
 
 ITEMS: list[dict[str, Any]] = [
@@ -58,9 +59,11 @@ def _answer(items: list[dict[str, Any]]) -> Completion:
 class ScriptedBackend:
     answers: list[Completion]
     calls: list[tuple[str, list[Message]]] = field(default_factory=list)
+    efforts: list[str | None] = field(default_factory=list)
 
     async def complete(self, model: LLMModelConfig, messages: Sequence[Message]) -> Completion:
         self.calls.append((model.id, list(messages)))
+        self.efforts.append(model.reasoning_effort)
         return self.answers.pop(0)
 
 
@@ -143,6 +146,48 @@ def test_chosen_model_is_used() -> None:
 
     assert response.headers["X-LLM-Model"] == "other"
     assert backend.calls[0][0] == "other"
+
+
+def test_fast_mode_uses_the_fast_reasoning_effort_and_is_reported() -> None:
+    backend = ScriptedBackend([_answer(ITEMS)])
+    _install(backend, (TUNABLE, OTHER))
+
+    response = _post(mode="fast")
+
+    assert response.status_code == 200
+    assert response.headers["X-LLM-Mode"] == "fast"
+    assert backend.efforts == ["low"]
+
+
+def test_precise_mode_is_the_default_when_the_catalog_does_not_choose_one() -> None:
+    backend = ScriptedBackend([_answer(ITEMS)])
+    _install(backend, (TUNABLE, OTHER))
+
+    response = _post()
+
+    assert response.headers["X-LLM-Mode"] == "precise"
+    assert backend.efforts == [None]
+
+
+def test_fast_mode_on_a_model_without_it_runs_and_reports_precise() -> None:
+    backend = ScriptedBackend([_answer(ITEMS)])
+    _install(backend, (TUNABLE, OTHER))
+
+    response = _post(model="other", mode="fast")
+
+    assert response.headers["X-LLM-Mode"] == "precise"
+    assert backend.efforts == [None]
+
+
+def test_unknown_mode_is_rejected_before_calling_any_model() -> None:
+    backend = ScriptedBackend([])
+    _install(backend)
+
+    response = _post(mode="turbo")
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "INVALID_REQUEST"
+    assert backend.calls == []
 
 
 def test_unknown_model_is_rejected_before_calling_any_model() -> None:

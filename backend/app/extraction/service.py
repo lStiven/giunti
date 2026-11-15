@@ -13,7 +13,7 @@ import time
 from collections.abc import Awaitable, Sequence
 from dataclasses import dataclass
 
-from app.core.config import Settings
+from app.core.config import ReasoningMode, Settings
 from app.core.errors import AppError, ErrorCode
 from app.documents.models import ExtractedDocument
 from app.documents.registry import extract
@@ -34,6 +34,7 @@ type PartResult = StructuredResult[ExtractedQuestionnaire]
 class ExtractionOutcome:
     questionnaire: Questionnaire
     model_id: str
+    mode: ReasoningMode
     warnings: tuple[ExtractionWarning, ...]
     parts: int
     input_tokens: int
@@ -48,15 +49,27 @@ class QuestionnaireExtractor:
         self._settings = settings
 
     async def process(
-        self, data: bytes, filename: str, *, model_id: str | None = None
+        self,
+        data: bytes,
+        filename: str,
+        *,
+        model_id: str | None = None,
+        mode: ReasoningMode | None = None,
     ) -> ExtractionOutcome:
         # Fail on an unusable model before spending time reading the document.
         model = self._runner.resolve_model(model_id)
+        effective_mode = self._runner.resolve_mode(model, mode)
         # Reading is CPU-bound and blocking (pdfplumber, LibreOffice).
         document = await asyncio.to_thread(extract, data, filename, self._settings)
 
         started = time.perf_counter()
-        run = _PartsRun(self._runner, document, model.id, self._settings.extraction_parallel_parts)
+        run = _PartsRun(
+            self._runner,
+            document,
+            model.id,
+            effective_mode,
+            self._settings.extraction_parallel_parts,
+        )
         chunks = plan_chunks(document, self._settings.extraction_pages_per_part)
         results = [
             result
@@ -69,7 +82,9 @@ class QuestionnaireExtractor:
             raise AppError(ErrorCode.NO_ITEMS)
         key_fill = KeyFill(extracted)
         if self._settings.extraction_answer_key_pass:
-            key_fill = await fill_from_answer_key(self._runner, document, extracted, model.id)
+            key_fill = await fill_from_answer_key(
+                self._runner, document, extracted, model.id, effective_mode
+            )
             extracted = key_fill.questionnaire
         llm_duration_ms = round((time.perf_counter() - started) * 1000)
 
@@ -85,6 +100,7 @@ class QuestionnaireExtractor:
         return ExtractionOutcome(
             questionnaire=extracted.to_public(),
             model_id=model.id,
+            mode=effective_mode,
             warnings=tuple(warnings),
             parts=len(results),
             input_tokens=sum(result.input_tokens for result in usage),
@@ -98,11 +114,17 @@ class _PartsRun:
     """Extraction of one document's parts on one model, with a cap on parallel calls."""
 
     def __init__(
-        self, runner: StructuredRunner, document: ExtractedDocument, model_id: str, parallel: int
+        self,
+        runner: StructuredRunner,
+        document: ExtractedDocument,
+        model_id: str,
+        mode: ReasoningMode,
+        parallel: int,
     ) -> None:
         self._runner = runner
         self._document = document
         self._model_id = model_id
+        self._mode = mode
         self._slots = asyncio.Semaphore(parallel)
 
     async def extract(self, chunk: Chunk) -> list[PartResult]:
@@ -114,6 +136,7 @@ class _PartsRun:
                     questionnaire_task(self._document, chunk),
                     build_content(self._document, chunk),
                     model_id=self._model_id,
+                    mode=self._mode,
                 )
         except LLMRunError as error:
             if error.kind is not FailureKind.TRUNCATED or len(chunk.pages) == 1:

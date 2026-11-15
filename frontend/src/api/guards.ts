@@ -10,6 +10,7 @@ import {
   type ModelInfo,
   type ProviderModels,
   type Questionnaire,
+  type ReasoningMode,
 } from "../types/questionnaire";
 
 type UnknownRecord = Record<string, unknown>;
@@ -72,6 +73,10 @@ export function isQuestionnaire(value: unknown): value is Questionnaire {
   );
 }
 
+export function isReasoningMode(value: unknown): value is ReasoningMode {
+  return value === "fast" || value === "precise";
+}
+
 function isModelInfo(value: unknown): value is ModelInfo {
   return (
     isRecord(value) &&
@@ -80,7 +85,8 @@ function isModelInfo(value: unknown): value is ModelInfo {
     isString(value["description"]) &&
     typeof value["vision"] === "boolean" &&
     typeof value["free"] === "boolean" &&
-    typeof value["is_default"] === "boolean"
+    typeof value["is_default"] === "boolean" &&
+    isArrayOf(value["modes"], isReasoningMode)
   );
 }
 
@@ -98,6 +104,7 @@ export function isModelCatalog(value: unknown): value is ModelCatalog {
   return (
     isRecord(value) &&
     isString(value["default_model"]) &&
+    isReasoningMode(value["default_mode"]) &&
     isArrayOf(value["providers"], isProviderModels)
   );
 }

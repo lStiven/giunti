@@ -7,6 +7,7 @@ export const API_KEY = "gk_acme_secret";
 
 export const CATALOG: ModelCatalog = {
   default_model: "gemini-flash",
+  default_mode: "fast",
   providers: [
     {
       id: "gemini",
@@ -20,6 +21,7 @@ export const CATALOG: ModelCatalog = {
           vision: true,
           free: false,
           is_default: true,
+          modes: ["fast", "precise"],
         },
       ],
     },
@@ -35,6 +37,7 @@ export const CATALOG: ModelCatalog = {
           vision: true,
           free: false,
           is_default: false,
+          modes: ["precise"],
         },
       ],
     },

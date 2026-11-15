@@ -21,7 +21,7 @@ describe("errorGuidance", () => {
     const guidance = errorGuidance(
       facts({
         reason: "quota_exhausted",
-        details: { model: "gemini-flash" },
+        details: { model: "gemini-flash", mode: "fast" },
         retryAfterSeconds: 900,
       }),
     );
@@ -119,6 +119,7 @@ describe("error body and warnings", () => {
       apiKey: "k",
       file: new File(["x"], "a.pdf"),
       model: null,
+      mode: "fast",
     }).catch((caught: unknown) => caught);
 
     expect(error).toBeInstanceOf(ApiRequestError);
@@ -136,6 +137,7 @@ describe("error body and warnings", () => {
       apiKey: "k",
       file: new File(["x"], "a.pdf"),
       model: null,
+      mode: "fast",
     });
 
     expect(result.run.notices[0]?.items).toEqual([1, 2, 3, 7]);

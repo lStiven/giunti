@@ -36,9 +36,14 @@ export interface Questionnaire {
   items: Item[];
 }
 
+/** How much the model reasons: "fast" is quicker and cheaper, "precise" for hard documents. */
+export type ReasoningMode = "fast" | "precise";
+
 /** Data about the run, read from the response headers. */
 export interface RunInfo {
   model: string;
+  /** The mode that actually ran (header `X-LLM-Mode`); null with older servers. */
+  mode: ReasoningMode | null;
   durationMs: number;
   inputTokens: number;
   outputTokens: number;
@@ -71,6 +76,8 @@ export interface ModelInfo {
   vision: boolean;
   free: boolean;
   is_default: boolean;
+  /** Always includes "precise"; "fast" only when the model offers it. */
+  modes: ReasoningMode[];
 }
 
 export interface ProviderModels {
@@ -82,5 +89,6 @@ export interface ProviderModels {
 
 export interface ModelCatalog {
   default_model: string;
+  default_mode: ReasoningMode;
   providers: ProviderModels[];
 }

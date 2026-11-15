@@ -2,8 +2,8 @@
 questionnaire JSON.
 
 The JSON body is the contract fixed by the problem statement; data about the run goes in
-headers: the model used, token usage, LLM time, repairs and warnings (a JSON list of objects
-with `code`, `message`, `items` and `pages`; see `app.extraction.warnings`).
+headers: the model and reasoning mode used, token usage, LLM time, repairs and warnings (a JSON
+list of objects with `code`, `message`, `items` and `pages`; see `app.extraction.warnings`).
 """
 
 import json
@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, File, Form, Response, UploadFile
 
 from app.api.error_handlers import ErrorResponse
 from app.auth.dependencies import require_extraction_quota
-from app.core.config import get_settings
+from app.core.config import ReasoningMode, get_settings
 from app.documents.security import BYTES_PER_MB
 from app.extraction.schema import Questionnaire
 from app.extraction.service import ExtractionOutcome, QuestionnaireExtractor
@@ -48,17 +48,25 @@ async def extract_questionnaire(
         str | None,
         Form(description="Model id from GET /api/v1/models; the default model when omitted"),
     ] = None,
+    mode: Annotated[
+        ReasoningMode | None,
+        Form(
+            description="fast: less reasoning, faster and cheaper. precise: more reasoning, for "
+            "hard documents. The catalog default when omitted; precise for models without fast"
+        ),
+    ] = None,
 ) -> Questionnaire:
     # Read one byte over the limit so oversized files are rejected without loading them whole.
     limit = get_settings().max_file_size_mb * BYTES_PER_MB
     data = await file.read(limit + 1)
-    outcome = await extractor.process(data, file.filename or "", model_id=model or None)
+    outcome = await extractor.process(data, file.filename or "", model_id=model or None, mode=mode)
     _set_run_headers(response, outcome)
     return outcome.questionnaire
 
 
 def _set_run_headers(response: Response, outcome: ExtractionOutcome) -> None:
     response.headers["X-LLM-Model"] = outcome.model_id
+    response.headers["X-LLM-Mode"] = outcome.mode
     response.headers["X-LLM-Input-Tokens"] = str(outcome.input_tokens)
     response.headers["X-LLM-Output-Tokens"] = str(outcome.output_tokens)
     response.headers["X-LLM-Repairs"] = str(outcome.repairs)

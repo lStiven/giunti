@@ -46,6 +46,38 @@ describe("App", () => {
     expect(screen.getByText("1 aviso: revisa este punto")).toBeDefined();
   });
 
+  it("offers the fast and precise modes and sends the chosen one", async () => {
+    let sentMode: FormDataEntryValue | null = null;
+    stubApi({
+      models: () => json(CATALOG),
+      extract: (init) => {
+        sentMode = init.body instanceof FormData ? init.body.get("mode") : null;
+        return json(QUESTIONNAIRE, 200, { "X-LLM-Model": "gemini-flash", "X-LLM-Mode": "precise" });
+      },
+    });
+    const user = setup();
+
+    await enterKey(user);
+    await chooseFile(user);
+    expect(screen.getByRole("radio", { name: /^Rápido/ })).toHaveProperty("checked", true);
+    await user.click(screen.getByRole("radio", { name: /^Preciso/ }));
+    await user.click(screen.getByRole("button", { name: "Extraer preguntas" }));
+
+    expect(await screen.findByText("Gemini 3.8 Flash · Preciso")).toBeDefined();
+    expect(sentMode).toBe("precise");
+  });
+
+  it("hides the mode choice for models that only read in precise mode", async () => {
+    stubApi({ models: () => json(CATALOG) });
+    const user = setup();
+
+    await enterKey(user);
+    expect(await screen.findByRole("group", { name: "Modo de lectura" })).toBeDefined();
+    await user.click(screen.getByRole("radio", { name: /GPT-6.1 Terra/ }));
+
+    expect(screen.queryByRole("group", { name: "Modo de lectura" })).toBeNull();
+  });
+
   it("signs in from an invitation link and removes the key from the address bar", async () => {
     window.history.replaceState(null, "", `/#clave=${API_KEY}`);
     const fetchStub = stubApi({ models: () => json(CATALOG) });
