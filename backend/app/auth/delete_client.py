@@ -2,6 +2,7 @@
 
 Usage:
     uv run python -m app.auth.delete_client colegio-san-jose
+    uv run python -m app.auth.delete_client administracion --env-file .env.production
 
 The admin panel deletes clients; administrators can only be deleted here. The key stops working
 at once and the deletion cannot be undone.
@@ -9,6 +10,7 @@ at once and the deletion cannot be undone.
 
 import argparse
 import sys
+from pathlib import Path
 
 from sqlalchemy.orm import Session
 
@@ -21,9 +23,12 @@ from app.core.database import make_engine
 def main(argv: list[str] | None = None, settings: Settings | None = None) -> int:
     parser = argparse.ArgumentParser(description="Delete a client (or administrator) API key.")
     parser.add_argument("client_id", help="Id shown in the admin panel, e.g. 'colegio-san-jose'")
+    parser.add_argument(
+        "--env-file", type=Path, help="Read the settings from this file instead of .env"
+    )
     args = parser.parse_args(argv)
 
-    current = settings or get_settings()
+    current = settings or (Settings(_env_file=args.env_file) if args.env_file else get_settings())
     engine = make_engine(current.database_url)
     create_tables(engine)
     try:

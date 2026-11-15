@@ -11,7 +11,7 @@ flowchart LR
     R["1 · Requisitos"] --> K["2 · API key<br/>de Gemini"] --> C["3 · Clonar"] --> E["4 · Configurar<br/>backend/.env"] --> U["5 · Levantar"] --> A["6 · Crear el<br/>administrador"] --> P["7 · Primera<br/>prueba"]
 ```
 
-> Para **modificar el código** usa la [guía de desarrollo](desarrollo.md). Para publicarlo en un **servidor con dominio**, sigue primero esta guía y luego la de [despliegue](despliegue.md).
+> Para **modificar el código** usa la [guía de desarrollo](desarrollo.md). Para publicar cambios en **producción (Google Cloud)**, usa la [guía de despliegue](despliegue.md); para instalarlo en un **servidor propio con dominio**, sigue primero esta guía y luego la de [servidor propio](servidor-propio.md).
 
 ---
 

@@ -19,9 +19,29 @@ Identifica cada ítem, su tipo, sus alternativas y, si el documento la marca, la
 ![DeepSeek](https://img.shields.io/badge/DeepSeek-4D6BFE?logo=deepseek&logoColor=white)
 ![vía LiteLLM](https://img.shields.io/badge/v%C3%ADa-LiteLLM-1F2937)
 
-[Inicio rápido](#inicio-rápido) · [Guías](#guías) · [Cómo funciona](guia/funcionamiento.md) · [API](guia/uso.md#integración-por-api) · [Supuestos](#supuestos)
+[Pruébalo en línea](#pruébalo-en-línea) · [Inicio rápido](#inicio-rápido) · [Guías](#guías) · [Cómo funciona](guia/funcionamiento.md) · [API](guia/uso.md#integración-por-api) · [Supuestos](#supuestos)
 
 </div>
+
+---
+
+## Pruébalo en línea
+
+El servicio está publicado en Google Cloud:
+
+| Qué | Dirección | Para quién |
+|---|---|---|
+| **Página de los clientes** | https://giunti-514722.web.app | Quien prueba: sube un cuestionario y ve el resultado |
+| **Panel de administración** | https://giunti-514722.web.app/admin | El equipo: crea los accesos de prueba |
+| **API** | https://giunti-backend-747240323866.us-central1.run.app/api/v1 | Integraciones (header `X-API-Key`) |
+| **Documentación de la API** | https://giunti-backend-747240323866.us-central1.run.app/docs | Explorar y probar los endpoints desde el navegador |
+| **Estado del servicio** | https://giunti-backend-747240323866.us-central1.run.app/health | Responde `{"status":"ok"}` si el backend está arriba |
+
+**Para probarlo necesitas un enlace de invitación.** El acceso no es público: pídele uno al equipo. Con el enlace entras sin escribir ninguna clave. Si vas a integrarte por API, pide también la clave que aparece al crear la invitación.
+
+- **Primera petición lenta:** el backend se apaga cuando nadie lo usa, así que la primera petición después de un rato tarda unos segundos más en responder.
+- **Duración:** una extracción tarda entre 20 segundos y 3 minutos según el documento; los muy largos, más.
+- **Límites:** cada acceso tiene un límite de extracciones por día y por minuto, que fija el administrador.
 
 ---
 
@@ -132,7 +152,8 @@ El último comando imprime un enlace `http://localhost:8000/admin#clave=gk_…`.
 | Guía | Cuándo leerla |
 |---|---|
 | [Instalación](guia/instalacion.md) | Primera vez: levantar el servicio en tu computador, paso a paso y desde cero |
-| [Despliegue en un servidor](guia/despliegue.md) | Publicarlo en un dominio con HTTPS, respaldos y actualizaciones |
+| [Despliegue en Google Cloud](guia/despliegue.md) | Publicar cambios en producción (Cloud Run + Firebase), volver atrás, configuración y secretos |
+| [Servidor propio](guia/servidor-propio.md) | Instalarlo con Docker Compose en un servidor con dominio y HTTPS |
 | [Uso](guia/uso.md) | Panel de administración, página de los clientes e integración por API |
 | [Cómo funciona](guia/funcionamiento.md) | Arquitectura, flujos y diagramas: qué pasa desde que se sube el archivo |
 | [Desarrollo](guia/desarrollo.md) | Modificar el código: devcontainer, comandos, estructura y controles de calidad |

@@ -320,6 +320,27 @@ def test_delete_command_removes_any_client_including_administrators(tmp_path: Pa
     assert stored is None
 
 
+def test_admin_commands_read_the_settings_of_the_given_env_file(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Importing LiteLLM loads backend/.env into the environment, which would win over the file.
+    for name in ("API_KEY_PEPPER", "DATABASE_URL", "PUBLIC_APP_URL"):
+        monkeypatch.delenv(name, raising=False)
+    env_file = tmp_path / "production.env"
+    env_file.write_text(
+        f"API_KEY_PEPPER={'q' * 40}\n"
+        f"DATABASE_URL=sqlite:///{tmp_path / 'production.db'}\n"
+        "PUBLIC_APP_URL=https://prod.example\n"
+    )
+
+    created = create_key_main(["--name", "Ops", "--admin", "--env-file", str(env_file)])
+    output = capsys.readouterr().out
+    deleted = delete_client_main(["ops", "--env-file", str(env_file)])
+
+    assert (created, deleted) == (0, 0)
+    assert "https://prod.example/admin#clave=gk_ops_" in output
+
+
 def test_create_key_command_creates_administrators_with_an_admin_link(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

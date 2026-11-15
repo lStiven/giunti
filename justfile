@@ -11,6 +11,16 @@ mod frontend
 
 pre_commit_version := "4.0.1"
 
+# Production on Google Cloud (see guia/despliegue.md). Override with env vars for another project.
+# The backend URL is the stable https://<service>-<project number>.<region>.run.app, the one
+# allowed by the CSP in frontend/firebase.json.
+gcp_project := env("GCP_PROJECT", "giunti-514722")
+gcp_region := env("GCP_REGION", "us-central1")
+backend_service := env("BACKEND_SERVICE", "giunti-backend")
+firebase_site := env("FIREBASE_SITE", gcp_project)
+backend_image := gcp_region + "-docker.pkg.dev/" + gcp_project + "/giunti/backend"
+gcloud := env("GCLOUD", home_directory() / "google-cloud-sdk/bin/gcloud")
+
 # List the available recipes
 default:
     @just --list --unsorted
@@ -94,3 +104,53 @@ up:
 [group('run')]
 down:
     docker compose down
+
+# Deploy the backend and then the frontend from the current commit
+[group('deploy')]
+deploy: deploy-backend deploy-frontend
+
+# Build the backend in Cloud Build from the current commit and roll it out on Cloud Run
+[group('deploy')]
+deploy-backend: _deploy-ready
+    #!/usr/bin/env bash
+    set -euo pipefail
+    image="{{ backend_image }}:$(git rev-parse --short HEAD)"
+    echo "==> Building $image in Cloud Build"
+    "{{ gcloud }}" builds submit backend --tag "$image" --region "{{ gcp_region }}" --project "{{ gcp_project }}" --quiet
+    echo "==> Rolling out on Cloud Run ({{ backend_service }})"
+    "{{ gcloud }}" run deploy "{{ backend_service }}" --image "$image" --region "{{ gcp_region }}" --project "{{ gcp_project }}" --quiet
+    url="https://{{ backend_service }}-$("{{ gcloud }}" projects describe "{{ gcp_project }}" --format 'value(projectNumber)').{{ gcp_region }}.run.app"
+    echo "==> Health: $(curl -fsS "$url/health")"
+
+# Build the frontend against the deployed backend and publish it on Firebase Hosting
+[group('deploy')]
+deploy-frontend: _deploy-ready
+    #!/usr/bin/env bash
+    set -euo pipefail
+    url="https://{{ backend_service }}-$("{{ gcloud }}" projects describe "{{ gcp_project }}" --format 'value(projectNumber)').{{ gcp_region }}.run.app"
+    echo "==> Building the frontend for $url"
+    (cd frontend && VITE_API_URL="$url" npm run build --silent)
+    echo "==> Publishing on Firebase Hosting ({{ firebase_site }})"
+    GCLOUD="{{ gcloud }}" python3 scripts/deploy_hosting.py "{{ firebase_site }}" "{{ gcp_project }}"
+
+# What is running in production: backend revision and image, and the public addresses
+[group('deploy')]
+deploy-status:
+    "{{ gcloud }}" run services describe "{{ backend_service }}" --region "{{ gcp_region }}" --project "{{ gcp_project }}" --format 'table(status.latestReadyRevisionName:label=REVISION,spec.template.spec.containers[0].image.basename():label=IMAGE,metadata.annotations."serving.knative.dev/lastModifier":label=DEPLOYED_BY)'
+    @echo "API: https://{{ backend_service }}-$("{{ gcloud }}" projects describe "{{ gcp_project }}" --format 'value(projectNumber)').{{ gcp_region }}.run.app"
+    @echo "Web: https://{{ firebase_site }}.web.app"
+
+# Deploys must match a commit that is already on GitHub, so production is always traceable
+_deploy-ready:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "$(git status --porcelain -- backend frontend scripts)" ]; then
+        echo "Uncommitted changes in backend/, frontend/ or scripts/: commit them before deploying." >&2
+        exit 1
+    fi
+    git fetch --quiet origin
+    if ! git merge-base --is-ancestor HEAD "@{upstream}"; then
+        echo "This commit is not on GitHub yet: run 'git push' before deploying." >&2
+        exit 1
+    fi
+    test -x "{{ gcloud }}" || { echo "gcloud not found: see guia/despliegue.md" >&2; exit 1; }

@@ -65,6 +65,8 @@ Cada proyecto (`backend/`, `frontend/`, `eval/`) tiene su propio `justfile` y fu
 | `just backend::test [args]` | Solo los tests del backend (los args van a pytest) |
 | `just audit` / `just outdated` | Dependencias vulnerables o deprecadas / actualizaciones disponibles |
 | `just up` / `just down` | Docker Compose (`docker compose up --build` / `down`) |
+| `just deploy` / `just deploy-backend` / `just deploy-frontend` | Publicar en producción (Google Cloud); ver la [guía de despliegue](despliegue.md#publicar-cambios) |
+| `just deploy-status` | Qué versión está en producción |
 
 ## Controles de calidad
 

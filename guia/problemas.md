@@ -44,7 +44,7 @@ Cada error que muestra la página incluye un **código de solicitud**. Búscalo 
 
 | Síntoma | Causa | Solución |
 |---|---|---|
-| Las extracciones largas fallan siempre a los 60 o 100 segundos, pero las cortas funcionan | El proxy inverso corta la petición antes de que termine | Sube su tiempo de espera a 900 s, o usa Caddy (ver [despliegue](despliegue.md#5-pon-https-con-caddy)) |
+| Las extracciones largas fallan siempre a los 60 o 100 segundos, pero las cortas funcionan | El proxy inverso corta la petición antes de que termine | Sube su tiempo de espera a 900 s, o usa Caddy (ver [servidor propio](servidor-propio.md#5-pon-https-con-caddy)) |
 | Los archivos de más de 1 MB fallan antes de procesarse (error 413) | El nginx de delante tiene el límite de subida por defecto | Agrega `client_max_body_size 25m;` en su configuración |
 | Caddy no obtiene el certificado | El DNS aún no apunta al servidor, o los puertos 80/443 están cerrados | Comprueba el registro A y el firewall; `sudo journalctl -u caddy` muestra el motivo |
 | `http://IP:8000` responde desde fuera del servidor | `APP_BIND_ADDRESS` no está en `127.0.0.1` | Agrégalo al `.env` de la raíz y ejecuta `docker compose up -d` |

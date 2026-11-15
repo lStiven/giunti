@@ -3,6 +3,7 @@
 Usage:
     uv run python -m app.auth.create_key --name "Administración" --admin
     uv run python -m app.auth.create_key --name "Colegio San José" --daily-limit 100
+    uv run python -m app.auth.create_key --name "Administración" --admin --env-file .env.production
 
 The first administrator must be created here; after that, clients are created from the admin
 panel. Prints the key once and the invitation link that signs the person in with one click.
@@ -10,6 +11,7 @@ panel. Prints the key once and the invitation link that signs the person in with
 
 import argparse
 import sys
+from pathlib import Path
 
 from sqlalchemy.orm import Session
 
@@ -26,9 +28,12 @@ def main(argv: list[str] | None = None, settings: Settings | None = None) -> int
     parser.add_argument("--admin", action="store_true", help="Can use the admin panel")
     parser.add_argument("--per-minute-limit", type=int, default=10)
     parser.add_argument("--daily-limit", type=int, default=100)
+    parser.add_argument(
+        "--env-file", type=Path, help="Read the settings from this file instead of .env"
+    )
     args = parser.parse_args(argv)
 
-    current = settings or get_settings()
+    current = settings or _settings(args.env_file)
     engine = make_engine(current.database_url)
     create_tables(engine)
     try:
@@ -58,6 +63,10 @@ def main(argv: list[str] | None = None, settings: Settings | None = None) -> int
         f"API key (shown only once):\n{issued.api_key}\n"
     )
     return 0
+
+
+def _settings(env_file: Path | None) -> Settings:
+    return Settings(_env_file=env_file) if env_file else get_settings()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,13 @@
+# Files never uploaded to Cloud Build (just deploy-backend). Secrets above all.
+.gcloudignore
+.env
+.env.*
+!.env.example
+data/
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+tests/
+.import_linter_cache/
