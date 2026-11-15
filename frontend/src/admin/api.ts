@@ -6,6 +6,8 @@ export interface ClientView {
   name: string;
   active: boolean;
   is_admin: boolean;
+  /** Can use the precise reasoning mode; otherwise only the fast one. */
+  allow_precise: boolean;
   per_minute_limit: number;
   daily_limit: number;
   used_today: number;
@@ -25,10 +27,11 @@ export interface NewClient {
   name: string;
   daily_limit: number;
   per_minute_limit: number;
+  allow_precise: boolean;
 }
 
 export type ClientChanges = Partial<
-  Pick<ClientView, "name" | "active" | "daily_limit" | "per_minute_limit">
+  Pick<ClientView, "name" | "active" | "daily_limit" | "per_minute_limit" | "allow_precise">
 >;
 
 const ADMIN_URL = `${API_URL}/api/v1/admin`;
@@ -110,6 +113,7 @@ function isClientView(value: unknown): value is ClientView {
     typeof value["name"] === "string" &&
     typeof value["active"] === "boolean" &&
     typeof value["is_admin"] === "boolean" &&
+    typeof value["allow_precise"] === "boolean" &&
     typeof value["per_minute_limit"] === "number" &&
     typeof value["daily_limit"] === "number" &&
     typeof value["used_today"] === "number" &&

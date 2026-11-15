@@ -226,7 +226,7 @@ function SetupForm({ state, dispatch, onExtract }: Omit<ContentProps, "onCancel"
                 dispatch({ type: "modelChosen", model });
               }}
             />
-            {modelModes(state.catalog, state.model).includes("fast") && (
+            {modelModes(state.catalog, state.model).length > 1 && (
               <ModePicker
                 selected={state.mode}
                 disabled={false}

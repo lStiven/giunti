@@ -4,12 +4,13 @@ Only enabled models are listed (their provider has an API key). Only what a clie
 choose is exposed: never the provider's model names, limits or keys.
 """
 
+from collections.abc import Collection
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from app.auth.dependencies import require_client
+from app.auth.dependencies import AuthenticatedClient, require_client
 from app.core.config import LLMCatalog, ReasoningMode, Settings, get_settings
 from app.core.errors import AppError, ErrorCode
 
@@ -44,9 +45,21 @@ class ModelCatalogResponse(BaseModel):
     providers: list[ProviderModels]
 
 
-def catalog_response(catalog: LLMCatalog) -> ModelCatalogResponse:
+def catalog_response(
+    catalog: LLMCatalog, allowed_modes: Collection[ReasoningMode] = ("fast", "precise")
+) -> ModelCatalogResponse:
+    """The catalog as one client sees it: only the modes it may use, and the models offering one."""
     if not catalog.models:
         raise AppError(ErrorCode.NO_MODELS_AVAILABLE)
+    usable = {
+        model.id: [mode for mode in model.modes if mode in allowed_modes]
+        for model in catalog.models
+    }
+    models = [model for model in catalog.models if usable[model.id]]
+    if not models:
+        raise AppError(ErrorCode.NO_MODELS_AVAILABLE)
+    default_model = catalog.default_model if usable.get(catalog.default_model) else models[0].id
+    default_mode = catalog.default_mode if catalog.default_mode in allowed_modes else "fast"
     providers = [
         ProviderModels(
             id=provider_id,
@@ -59,22 +72,24 @@ def catalog_response(catalog: LLMCatalog) -> ModelCatalogResponse:
                     description=model.description,
                     vision=model.vision,
                     free=model.free,
-                    is_default=model.id == catalog.default_model,
-                    modes=list(model.modes),
+                    is_default=model.id == default_model,
+                    modes=usable[model.id],
                 )
-                for model in catalog.models
+                for model in models
                 if model.provider == provider_id
             ],
         )
         for provider_id, provider in catalog.providers.items()
+        if any(model.provider == provider_id for model in models)
     ]
     return ModelCatalogResponse(
-        default_model=catalog.default_model,
-        default_mode=catalog.default_mode,
-        providers=providers,
+        default_model=default_model, default_mode=default_mode, providers=providers
     )
 
 
-@router.get("/models", dependencies=[Depends(require_client)])
-def list_models(settings: Annotated[Settings, Depends(get_settings)]) -> ModelCatalogResponse:
-    return catalog_response(settings.enabled_llm_catalog())
+@router.get("/models")
+def list_models(
+    settings: Annotated[Settings, Depends(get_settings)],
+    client: Annotated[AuthenticatedClient, Depends(require_client)],
+) -> ModelCatalogResponse:
+    return catalog_response(settings.enabled_llm_catalog(), client.allowed_modes)

@@ -1,6 +1,7 @@
 import { useId, useState, type ReactElement, type SubmitEvent } from "react";
 
 import type { NewClient } from "./api";
+import { PreciseModeCheck } from "./PreciseModeCheck";
 
 interface NewClientFormProps {
   busy: boolean;
@@ -15,6 +16,7 @@ export function NewClientForm({ busy, onCreate }: NewClientFormProps): ReactElem
   const [name, setName] = useState("");
   const [daily, setDaily] = useState(DEFAULT_DAILY_LIMIT);
   const [perMinute, setPerMinute] = useState(DEFAULT_PER_MINUTE_LIMIT);
+  const [allowPrecise, setAllowPrecise] = useState(false);
   const id = useId();
 
   const submit = (event: SubmitEvent<HTMLFormElement>): void => {
@@ -22,8 +24,14 @@ export function NewClientForm({ busy, onCreate }: NewClientFormProps): ReactElem
     if (name.trim() === "") {
       return;
     }
-    onCreate({ name: name.trim(), daily_limit: daily, per_minute_limit: perMinute });
+    onCreate({
+      name: name.trim(),
+      daily_limit: daily,
+      per_minute_limit: perMinute,
+      allow_precise: allowPrecise,
+    });
     setName("");
+    setAllowPrecise(false);
   };
 
   return (
@@ -76,6 +84,11 @@ export function NewClientForm({ busy, onCreate }: NewClientFormProps): ReactElem
       >
         {busy ? "Creando…" : "Crear invitación"}
       </button>
+      <PreciseModeCheck
+        className="new-client__check"
+        checked={allowPrecise}
+        onChange={setAllowPrecise}
+      />
     </form>
   );
 }

@@ -2,7 +2,18 @@
 
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, DateTime, Engine, ForeignKey, Integer, String
+from sqlalchemy import (
+    Boolean,
+    Date,
+    DateTime,
+    Engine,
+    ForeignKey,
+    Integer,
+    String,
+    false,
+    inspect,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base, create_schema
@@ -21,6 +32,10 @@ class ClientRow(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     key_created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    allow_precise: Mapped[bool] = mapped_column(Boolean, server_default=false())
+    """Can use the precise reasoning mode. New clients get what the administrator chooses (fast
+    only by default). When the column was added, existing clients got fast only and existing
+    administrators kept the precise mode."""
 
 
 class DailyUsageRow(Base):
@@ -36,6 +51,31 @@ class DailyUsageRow(Base):
     count: Mapped[int] = mapped_column(Integer)
 
 
+# Columns added after the first release: definition (with the value existing rows get) and
+# the statements that adjust existing rows. There are no migrations: each column is added at
+# startup when missing, so the statements run once.
+_ADDED_COLUMNS = {
+    ("clients", "allow_precise"): (
+        "BOOLEAN NOT NULL DEFAULT FALSE",
+        ("UPDATE clients SET allow_precise = TRUE WHERE is_admin",),
+    ),
+}
+
+
 def create_tables(engine: Engine) -> None:
-    """Creates the missing tables (importing this module registers them)."""
+    """Creates the missing tables and columns (importing this module registers them)."""
     create_schema(engine)
+    _add_missing_columns(engine)
+
+
+def _add_missing_columns(engine: Engine) -> None:
+    inspector = inspect(engine)
+    with engine.begin() as connection:
+        for (table, column), (definition, adjustments) in _ADDED_COLUMNS.items():
+            existing = {info["name"] for info in inspector.get_columns(table)}
+            if column not in existing:
+                # Fixed identifiers from _ADDED_COLUMNS, never user input.
+                statement = f"ALTER TABLE {table} ADD COLUMN {column} {definition}"
+                connection.execute(text(statement))
+                for adjustment in adjustments:
+                    connection.execute(text(adjustment))

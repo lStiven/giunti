@@ -26,6 +26,11 @@ def main(argv: list[str] | None = None, settings: Settings | None = None) -> int
     parser = argparse.ArgumentParser(description="Create a client (or administrator) API key.")
     parser.add_argument("--name", required=True, help="Display name, e.g. 'Colegio San José'")
     parser.add_argument("--admin", action="store_true", help="Can use the admin panel")
+    parser.add_argument(
+        "--allow-precise",
+        action="store_true",
+        help="Can use the precise reasoning mode (administrators always can)",
+    )
     parser.add_argument("--per-minute-limit", type=int, default=10)
     parser.add_argument("--daily-limit", type=int, default=100)
     parser.add_argument(
@@ -44,6 +49,7 @@ def main(argv: list[str] | None = None, settings: Settings | None = None) -> int
                 name=args.name,
                 limits=ClientLimits(per_minute=args.per_minute_limit, daily=args.daily_limit),
                 is_admin=args.admin,
+                allow_precise=args.allow_precise or args.admin,
             )
     except ValueError as exc:
         sys.stderr.write(f"error: {exc}\n")

@@ -73,8 +73,11 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
       return { ...state, stage: "needsKey", error: null };
     case "fileChosen":
       return { ...state, file: action.file, error: null };
-    case "modelChosen":
-      return { ...state, model: action.model };
+    case "modelChosen": {
+      const modes = modelModes(state.catalog, action.model);
+      const mode = modes.includes(state.mode) ? state.mode : (modes[0] ?? "fast");
+      return { ...state, model: action.model, mode };
+    }
     case "modeChosen":
       return { ...state, mode: action.mode };
     case "extractionStarted":

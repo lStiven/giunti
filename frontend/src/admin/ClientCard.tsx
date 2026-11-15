@@ -1,6 +1,7 @@
 import { useId, useState, type ReactElement, type SubmitEvent } from "react";
 
 import type { ClientChanges, ClientView } from "./api";
+import { PreciseModeCheck } from "./PreciseModeCheck";
 
 interface ClientCardProps {
   client: ClientView;
@@ -10,7 +11,7 @@ interface ClientCardProps {
   onDelete: () => void;
 }
 
-const DATE_FORMAT = new Intl.DateTimeFormat("es", { dateStyle: "medium", timeStyle: "short" });
+const DATE_FORMAT = new Intl.DateTimeFormat("es", { dateStyle: "short", timeStyle: "short" });
 
 /** One client: status, today's usage and the actions an administrator can take. */
 export function ClientCard({
@@ -34,6 +35,7 @@ export function ClientCard({
           <span className={client.active ? "tag tag--success" : "tag tag--warning"}>
             {client.active ? "Activo" : "Desactivado"}
           </span>
+          <span className="tag">{client.allow_precise ? "Rápido y preciso" : "Solo rápido"}</span>
         </span>
       </div>
 
@@ -90,7 +92,7 @@ export function ClientCard({
               setEditing(true);
             }}
           >
-            Editar límites
+            Editar acceso
           </button>
           <button
             type="button"
@@ -127,17 +129,18 @@ function LimitsForm({
 }): ReactElement {
   const [daily, setDaily] = useState(client.daily_limit);
   const [perMinute, setPerMinute] = useState(client.per_minute_limit);
+  const [allowPrecise, setAllowPrecise] = useState(client.allow_precise);
   const id = useId();
 
   const submit = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault();
-    onSave({ daily_limit: daily, per_minute_limit: perMinute });
+    onSave({ daily_limit: daily, per_minute_limit: perMinute, allow_precise: allowPrecise });
   };
 
   return (
     <form className="limits-form" onSubmit={submit}>
       <div className="field">
-        <label htmlFor={`${id}-daily`}>Usos por día</label>
+        <label htmlFor={`${id}-daily`}>Por día</label>
         <input
           id={`${id}-daily`}
           className="input"
@@ -151,7 +154,7 @@ function LimitsForm({
         />
       </div>
       <div className="field">
-        <label htmlFor={`${id}-minute`}>Usos por minuto</label>
+        <label htmlFor={`${id}-minute`}>Por minuto</label>
         <input
           id={`${id}-minute`}
           className="input"
@@ -164,12 +167,19 @@ function LimitsForm({
           }}
         />
       </div>
-      <button type="submit" className="button button--small" disabled={busy}>
-        Guardar
-      </button>
-      <button type="button" className="button button--ghost button--small" onClick={onCancel}>
-        Cancelar
-      </button>
+      <PreciseModeCheck
+        className="limits-form__check"
+        checked={allowPrecise}
+        onChange={setAllowPrecise}
+      />
+      <div className="limits-form__actions">
+        <button type="submit" className="button button--small" disabled={busy}>
+          Guardar
+        </button>
+        <button type="button" className="button button--ghost button--small" onClick={onCancel}>
+          Cancelar
+        </button>
+      </div>
     </form>
   );
 }

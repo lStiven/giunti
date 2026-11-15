@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
 from pathlib import Path
 
@@ -7,12 +7,14 @@ import pytest
 from fastapi import Response
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
+from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.auth.create_key import main as create_key_main
 from app.auth.delete_client import main as delete_client_main
 from app.auth.dependencies import AuthenticatedClient, get_rate_limiter, require_extraction_quota
 from app.auth.keys import client_id_of, generate_key, hash_key, key_matches
+from app.auth.models import create_tables
 from app.auth.rate_limit import DailyUsage, MemoryDailyUsage, Quota, RateLimiter
 from app.auth.store import ClientRepository, NewClient, UsageRepository
 from app.core.config import LLMCatalog, Settings, get_settings
@@ -25,7 +27,7 @@ CATALOG = LLMCatalog.model_validate(
     {
         "default_model": "flash",
         "providers": {"gemini": {"label": "Gemini", "description": "d"}},
-        "models": [{"id": "flash", "model": "gemini/flash"}],
+        "models": [{"id": "flash", "model": "gemini/flash", "fast_reasoning_effort": "low"}],
     }
 )
 ACME_KEY = generate_key("acme")
@@ -339,6 +341,68 @@ def test_admin_commands_read_the_settings_of_the_given_env_file(
 
     assert (created, deleted) == (0, 0)
     assert "https://prod.example/admin#clave=gk_ops_" in output
+
+
+def test_existing_clients_get_only_the_fast_mode_and_keep_their_keys(tmp_path: Path) -> None:
+    engine = make_engine(f"sqlite:///{tmp_path / 'old.db'}")
+    create_tables(engine)
+    with Session(engine) as session:
+        clients = ClientRepository(session)
+        clients.create(_new_client("stiven", ACME_KEY))
+        clients.create(replace(_new_client("boss", OFF_KEY), is_admin=True))
+    with engine.begin() as connection:  # back to the schema before the column existed
+        connection.execute(text("ALTER TABLE clients DROP COLUMN allow_precise"))
+
+    create_tables(engine)
+
+    with Session(engine) as session:
+        clients = ClientRepository(session)
+        existing, admin = clients.find("stiven"), clients.find("boss")
+    engine.dispose()
+    assert existing is not None
+    assert admin is not None
+    assert not existing.allow_precise
+    assert existing.active
+    assert key_matches(ACME_KEY, existing.key_hash, PEPPER)
+    assert admin.allow_precise
+
+
+def test_fast_only_keys_see_only_the_fast_mode(database: sessionmaker[Session]) -> None:
+    with database() as session:
+        ClientRepository(session).update("acme", allow_precise=False)
+
+    body = TestClient(app).get("/api/v1/models", headers=_headers(ACME_KEY)).json()
+
+    assert body["default_mode"] == "fast"
+    assert body["providers"][0]["models"][0]["modes"] == ["fast"]
+
+
+def test_keys_with_the_precise_mode_see_both_modes(database: sessionmaker[Session]) -> None:
+    with database() as session:
+        ClientRepository(session).update("acme", allow_precise=True)
+
+    body = TestClient(app).get("/api/v1/models", headers=_headers(ACME_KEY)).json()
+
+    assert body["providers"][0]["models"][0]["modes"] == ["fast", "precise"]
+
+
+def test_create_key_command_gives_the_precise_mode_only_when_asked(tmp_path: Path) -> None:
+    settings = _settings(database_url=f"sqlite:///{tmp_path / 'keys.db'}")
+
+    create_key_main(["--name", "Fast"], settings)
+    create_key_main(["--name", "Precise", "--allow-precise"], settings)
+    create_key_main(["--name", "Boss", "--admin"], settings)
+
+    engine = make_engine(settings.database_url)
+    with Session(engine) as session:
+        clients = ClientRepository(session)
+        allowed = {cid: clients.find(cid) for cid in ("fast", "precise", "boss")}
+    engine.dispose()
+    assert {cid: c.allow_precise for cid, c in allowed.items() if c} == {
+        "fast": False,
+        "precise": True,
+        "boss": True,
+    }
 
 
 def test_create_key_command_creates_administrators_with_an_admin_link(

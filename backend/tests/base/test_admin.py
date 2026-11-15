@@ -21,7 +21,7 @@ SETTINGS = Settings(
         {
             "default_model": "flash",
             "providers": {"gemini": {"label": "Gemini", "description": "d"}},
-            "models": [{"id": "flash", "model": "gemini/flash"}],
+            "models": [{"id": "flash", "model": "gemini/flash", "fast_reasoning_effort": "low"}],
         }
     ),
 )
@@ -131,6 +131,27 @@ def test_limits_and_name_can_be_changed(keys: dict[str, str]) -> None:
 
     assert response.json()["daily_limit"] == 5
     assert response.json()["name"] == "CSJ"
+
+
+def test_new_clients_get_only_the_fast_mode_unless_the_admin_allows_precise(
+    keys: dict[str, str],
+) -> None:
+    fast = _call("POST", "/clients", keys["admin"], {"name": "Solo rapido"}).json()
+    precise = _call(
+        "POST", "/clients", keys["admin"], {"name": "Con preciso", "allow_precise": True}
+    ).json()
+
+    assert fast["client"]["allow_precise"] is False
+    assert precise["client"]["allow_precise"] is True
+
+
+def test_the_precise_mode_can_be_granted_and_removed(keys: dict[str, str]) -> None:
+    granted = _call("PATCH", "/clients/colegio-san-jose", keys["admin"], {"allow_precise": True})
+    removed = _call("PATCH", "/clients/colegio-san-jose", keys["admin"], {"allow_precise": False})
+
+    assert granted.json()["allow_precise"] is True
+    assert removed.json()["allow_precise"] is False
+    assert removed.json()["daily_limit"] == LIMITS.daily
 
 
 def test_admins_cannot_deactivate_themselves(keys: dict[str, str]) -> None:

@@ -523,6 +523,7 @@ button {
 
 .mode-option {
   display: grid;
+  align-content: start;
   gap: 4px;
   padding: 10px 14px;
   border: 1.5px solid var(--border);
@@ -1118,9 +1119,60 @@ button {
 
 .limits-form {
   display: grid;
-  grid-template-columns: 1fr 1fr auto auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   align-items: end;
+}
+
+.limits-form .input {
+  width: 100%;
+  min-width: 0;
+}
+
+.limits-form__check,
+.limits-form__actions,
+.new-client__check {
+  grid-column: 1 / -1;
+}
+
+.limits-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.check__label {
+  cursor: pointer;
+}
+
+.check__hint {
+  margin: 0;
+}
+
+.check input {
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.check__label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.check__hint {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 
 .button--small {
@@ -1131,7 +1183,7 @@ button {
 
 .clients {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
   gap: 12px;
   margin: 0;
   padding: 0;
@@ -1156,13 +1208,20 @@ button {
 
 .client-card__header {
   display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px 10px;
+}
+
+.client-card__header > div {
+  flex: 1 1 130px;
+  min-width: 0;
 }
 
 .client-card__name {
   font-weight: 650;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .client-card__id {
@@ -1175,15 +1234,13 @@ button {
   display: flex;
   flex-wrap: wrap;
   align-content: start;
-  justify-content: end;
   gap: 6px;
 }
 
 .client-card__stats {
   display: grid;
-  grid-template-columns: repeat(3, auto);
-  justify-content: start;
-  gap: 18px;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 14px;
   margin: 0;
   font-size: 0.85rem;
 }
@@ -1196,6 +1253,7 @@ button {
 .client-card__stats dd {
   margin: 0;
   font-weight: 600;
+  overflow-wrap: break-word;
 }
 
 .client-card__actions {
@@ -1275,8 +1333,7 @@ button {
 }
 
 @media (max-width: 640px) {
-  .new-client,
-  .limits-form {
+  .new-client {
     grid-template-columns: 1fr 1fr;
   }
 

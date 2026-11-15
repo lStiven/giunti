@@ -13,7 +13,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, Response, UploadFile
 
 from app.api.error_handlers import ErrorResponse
-from app.auth.dependencies import require_extraction_quota
+from app.auth.dependencies import AuthenticatedClient, require_extraction_quota
 from app.core.config import ReasoningMode, get_settings
 from app.documents.security import BYTES_PER_MB
 from app.extraction.schema import Questionnaire
@@ -35,13 +35,14 @@ def get_extractor() -> QuestionnaireExtractor:
 @router.post(
     "/questionnaires",
     response_model=Questionnaire,
-    dependencies=[Depends(require_extraction_quota)],
     responses={
         status: {"model": ErrorResponse} for status in (401, 403, 413, 415, 422, 429, 500, 502, 503)
     },
 )
-async def extract_questionnaire(
+async def extract_questionnaire(  # noqa: PLR0913 - FastAPI request parts and dependencies
     response: Response,
+    *,
+    client: Annotated[AuthenticatedClient, Depends(require_extraction_quota)],
     extractor: Annotated[QuestionnaireExtractor, Depends(get_extractor)],
     file: Annotated[UploadFile, File(description="PDF, DOCX or XLSX questionnaire")],
     model: Annotated[
@@ -59,7 +60,13 @@ async def extract_questionnaire(
     # Read one byte over the limit so oversized files are rejected without loading them whole.
     limit = get_settings().max_file_size_mb * BYTES_PER_MB
     data = await file.read(limit + 1)
-    outcome = await extractor.process(data, file.filename or "", model_id=model or None, mode=mode)
+    outcome = await extractor.process(
+        data,
+        file.filename or "",
+        model_id=model or None,
+        mode=mode,
+        allowed_modes=client.allowed_modes,
+    )
     _set_run_headers(response, outcome)
     return outcome.questionnaire
 

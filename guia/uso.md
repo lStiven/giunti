@@ -40,6 +40,7 @@ just backend::delete-key administracion                                        #
 **Crear un cliente**
 
 1. En **Nuevo cliente**, escribe su nombre (por ejemplo, "Colegio San José") y cuántas extracciones puede hacer **por día** y **por minuto**. Por defecto son 100 y 10.
+   Marca **Permitir modo preciso** solo si el cliente lo necesita: sin marcar, la clave solo usa el modo rápido, que es más barato, y en su página ni siquiera aparece la opción de modo.
 2. Pulsa **Crear invitación**.
 3. Pulsa **Copiar enlace** y envíaselo por correo o mensaje. Debajo, en **Ver la clave (para integraciones por API)**, está la clave para usar la API directamente.
 
@@ -49,7 +50,7 @@ just backend::delete-key administracion                                        #
 
 | Acción | Efecto |
 |---|---|
-| **Editar límites** | Cambia las extracciones permitidas por día y por minuto. Aplica de inmediato |
+| **Editar acceso** | Cambia las extracciones permitidas por día y por minuto, y si puede usar el modo preciso. Aplica de inmediato |
 | **Desactivar** / **Activar** | Bloquea o devuelve el acceso sin borrar al cliente |
 | **Nueva invitación** | Genera otra clave y otro enlace. **El anterior deja de funcionar** al instante |
 | **Eliminar** | Borra el cliente, su clave y su historial de uso. Su enlace deja de funcionar al instante y **no se puede deshacer** |
@@ -86,7 +87,7 @@ curl -H "X-API-Key: gk_colegio-san-jose_…" \
 
 `model` es opcional: sin él se usa el modelo por defecto. Sus valores posibles son los `id` que devuelve `GET /api/v1/models`.
 
-`mode` también es opcional: `fast` (rápido) o `precise` (preciso). Sin él se usa el `default_mode` del catálogo. `GET /api/v1/models` indica en `modes` cuáles ofrece cada modelo. Si un modelo no ofrece `fast`, se usa `precise`, y el header `X-LLM-Mode` informa el modo que realmente corrió. Por ejemplo, para el modo preciso agrega `-F mode=precise`. Para ver además los headers de la respuesta, agrega `-i` a `curl`. Usa un tiempo de espera de al menos 15 minutos en tu cliente HTTP: los documentos largos tardan.
+`mode` también es opcional: `fast` (rápido) o `precise` (preciso). Sin él se usa el `default_mode` del catálogo. `GET /api/v1/models` indica en `modes` cuáles puede usar **tu clave** en cada modelo: las claves sin permiso para el modo preciso solo ven `fast`, y pedir `precise` con ellas responde `403` (`mode_not_allowed`), sin consumir el modelo. Si un modelo no ofrece `fast`, se usa `precise`, y el header `X-LLM-Mode` informa el modo que realmente corrió. Por ejemplo, para el modo preciso agrega `-F mode=precise`. Para ver además los headers de la respuesta, agrega `-i` a `curl`. Usa un tiempo de espera de al menos 15 minutos en tu cliente HTTP: los documentos largos tardan.
 
 ### Endpoints
 
@@ -128,7 +129,7 @@ Los errores siguen el formato `{"error": {"code", "message", "request_id", "reas
 | HTTP | `code` | Cuándo |
 |---|---|---|
 | 401 | `UNAUTHENTICATED` | Falta la clave o no es válida |
-| 403 | `FORBIDDEN` | El cliente está desactivado, o no es administrador y entra al panel |
+| 403 | `FORBIDDEN` | El cliente está desactivado; no es administrador y entra al panel; o pidió el modo preciso sin tenerlo permitido (`reason`: `mode_not_allowed`) |
 | 404 | `NOT_FOUND` | La ruta o el cliente no existen |
 | 413 | `FILE_TOO_LARGE` | El archivo supera `MAX_FILE_SIZE_MB` |
 | 415 | `UNSUPPORTED_FORMAT` | No es PDF, DOCX ni XLSX, o es un formato antiguo o con macros |

@@ -77,6 +77,7 @@ class ErrorReason(StrEnum):
     MODEL_WITHOUT_KEY = "model_without_key"
     DOCUMENT_TOO_LONG_FOR_MODEL = "document_too_long_for_model"
     MODEL_CANNOT_READ_IMAGES = "model_cannot_read_images"
+    MODE_NOT_ALLOWED = "mode_not_allowed"
     INVALID_FIELDS = "invalid_fields"
     PER_MINUTE_LIMIT = "per_minute_limit"
     DAILY_LIMIT = "daily_limit"

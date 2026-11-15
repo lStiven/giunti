@@ -39,6 +39,7 @@ class ClientView(BaseModel):
     name: str
     active: bool
     is_admin: bool
+    allow_precise: bool
     per_minute_limit: int
     daily_limit: int
     used_today: int
@@ -59,6 +60,8 @@ class CreateClientRequest(BaseModel):
     name: ClientName
     daily_limit: int = Field(default=100, ge=1, le=MAX_DAILY_LIMIT)
     per_minute_limit: int = Field(default=10, ge=1, le=MAX_PER_MINUTE_LIMIT)
+    allow_precise: bool = False
+    """Fast mode only unless the administrator allows the precise one."""
 
 
 class UpdateClientRequest(BaseModel):
@@ -66,6 +69,7 @@ class UpdateClientRequest(BaseModel):
     active: bool | None = None
     daily_limit: int | None = Field(default=None, ge=1, le=MAX_DAILY_LIMIT)
     per_minute_limit: int | None = Field(default=None, ge=1, le=MAX_PER_MINUTE_LIMIT)
+    allow_precise: bool | None = None
 
 
 type Admin = Annotated[AuthenticatedClient, Depends(require_admin)]
@@ -88,7 +92,13 @@ def create_client(
     settings: CurrentSettings,
 ) -> IssuedKeyView:
     limits = ClientLimits(per_minute=request.per_minute_limit, daily=request.daily_limit)
-    issued = issue_client(clients, settings, name=request.name, limits=limits)
+    issued = issue_client(
+        clients,
+        settings,
+        name=request.name,
+        limits=limits,
+        allow_precise=request.allow_precise,
+    )
     return _issued_view(issued, used_today=0)
 
 
@@ -108,6 +118,7 @@ def update_client(
         active=request.active,
         per_minute_limit=request.per_minute_limit,
         daily_limit=request.daily_limit,
+        allow_precise=request.allow_precise,
     )
     if updated is None:
         raise _client_not_found(client_id)
@@ -149,6 +160,7 @@ def _view(client: ClientRecord, used_today: int) -> ClientView:
         name=client.name,
         active=client.active,
         is_admin=client.is_admin,
+        allow_precise=client.allow_precise,
         per_minute_limit=client.per_minute_limit,
         daily_limit=client.daily_limit,
         used_today=used_today,

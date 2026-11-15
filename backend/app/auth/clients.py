@@ -34,6 +34,7 @@ def issue_client(  # noqa: PLR0913 - every argument is a property of the new cli
     name: str,
     limits: ClientLimits,
     is_admin: bool = False,
+    allow_precise: bool = False,
     client_id: str | None = None,
 ) -> IssuedKey:
     client_id = client_id or clients.available_id(name)
@@ -45,6 +46,7 @@ def issue_client(  # noqa: PLR0913 - every argument is a property of the new cli
             per_minute_limit=limits.per_minute,
             daily_limit=limits.daily,
             is_admin=is_admin,
+            allow_precise=allow_precise,
             client_id=client_id,
         )
     )

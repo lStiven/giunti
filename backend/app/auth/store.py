@@ -32,6 +32,7 @@ class ClientRecord:
     created_at: datetime
     key_created_at: datetime
     last_used_at: datetime | None
+    allow_precise: bool
 
 
 class KeyStore(Protocol):
@@ -47,6 +48,7 @@ class NewClient:
     per_minute_limit: int
     daily_limit: int
     is_admin: bool = False
+    allow_precise: bool = False
     client_id: str | None = None
     """Generated from the name when not given."""
 
@@ -86,12 +88,13 @@ class ClientRepository:
             created_at=now,
             key_created_at=now,
             last_used_at=None,
+            allow_precise=client.allow_precise,
         )
         self._session.add(row)
         self._session.commit()
         return _record(row)
 
-    def update(
+    def update(  # noqa: PLR0913 - one optional argument per editable field
         self,
         client_id: str,
         *,
@@ -99,6 +102,7 @@ class ClientRepository:
         active: bool | None = None,
         per_minute_limit: int | None = None,
         daily_limit: int | None = None,
+        allow_precise: bool | None = None,
     ) -> ClientRecord | None:
         row = self._session.get(ClientRow, client_id)
         if row is None:
@@ -111,6 +115,8 @@ class ClientRepository:
             row.per_minute_limit = per_minute_limit
         if daily_limit is not None:
             row.daily_limit = daily_limit
+        if allow_precise is not None:
+            row.allow_precise = allow_precise
         self._session.commit()
         return _record(row)
 
@@ -203,6 +209,7 @@ def _record(row: ClientRow) -> ClientRecord:
         key_hash=row.key_hash,
         active=row.active,
         is_admin=row.is_admin,
+        allow_precise=row.allow_precise,
         per_minute_limit=row.per_minute_limit,
         daily_limit=row.daily_limit,
         created_at=_utc(row.created_at),

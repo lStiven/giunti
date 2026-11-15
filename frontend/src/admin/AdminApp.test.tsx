@@ -14,6 +14,7 @@ function client(overrides: Partial<ClientView> = {}): ClientView {
     name: "Colegio San José",
     active: true,
     is_admin: false,
+    allow_precise: false,
     per_minute_limit: 10,
     daily_limit: 100,
     used_today: 3,
@@ -112,6 +113,59 @@ describe("AdminApp", () => {
     expect(await within(card).findByText("Desactivado")).toBeDefined();
     expect(within(card).getByRole("button", { name: "Activar" })).toBeDefined();
     expect(screen.getByText("Los administradores se gestionan desde la terminal.")).toBeDefined();
+  });
+
+  it("creates fast-only invitations unless the precise mode is allowed", async () => {
+    openWithInvitation();
+    const created: unknown[] = [];
+    stubAdminApi((method, _path, body) => {
+      if (method === "POST") {
+        created.push(body);
+        return json(issued(client({ id: "nuevo", name: "Nuevo" })), 201);
+      }
+      return json([ADMIN]);
+    });
+    const user = userEvent.setup();
+    render(<AdminApp />);
+    const name = await screen.findByLabelText("Nombre del cliente");
+
+    await user.type(name, "Solo rapido");
+    await user.click(screen.getByRole("button", { name: "Crear invitación" }));
+    await user.click(await screen.findByRole("button", { name: "Listo" }));
+    await user.type(screen.getByLabelText("Nombre del cliente"), "Con preciso");
+    await user.click(screen.getByRole("checkbox", { name: /Permitir modo preciso/ }));
+    await user.click(screen.getByRole("button", { name: "Crear invitación" }));
+
+    expect(created).toEqual([
+      expect.objectContaining({ name: "Solo rapido", allow_precise: false }),
+      expect.objectContaining({ name: "Con preciso", allow_precise: true }),
+    ]);
+  });
+
+  it("shows each client's modes and lets the administrator change them", async () => {
+    openWithInvitation();
+    const patches: unknown[] = [];
+    stubAdminApi((method, _path, body) => {
+      if (method === "PATCH") {
+        patches.push(body);
+        return json(client({ allow_precise: true }));
+      }
+      return json([client()]);
+    });
+    const user = userEvent.setup();
+    render(<AdminApp />);
+    const card = (await screen.findByText("Colegio San José")).closest("li");
+    if (card === null) {
+      throw new Error("client card not found");
+    }
+
+    expect(within(card).getByText("Solo rápido")).toBeDefined();
+    await user.click(within(card).getByRole("button", { name: "Editar acceso" }));
+    await user.click(within(card).getByRole("checkbox", { name: /Permitir modo preciso/ }));
+    await user.click(within(card).getByRole("button", { name: "Guardar" }));
+
+    expect(await within(card).findByText("Rápido y preciso")).toBeDefined();
+    expect(patches).toEqual([expect.objectContaining({ allow_precise: true })]);
   });
 
   it("asks for confirmation before replacing a client's invitation", async () => {

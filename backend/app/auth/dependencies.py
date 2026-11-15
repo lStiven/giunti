@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 from app.auth.keys import client_id_of, hash_key, key_matches
 from app.auth.rate_limit import Quota, RateLimiter
 from app.auth.store import ClientRepository, UsageRepository
-from app.core.config import Settings, get_settings
+from app.core.config import ReasoningMode, Settings, get_settings
 from app.core.database import get_session
 from app.core.errors import AppError, ErrorCode, ErrorReason
 
@@ -41,6 +41,11 @@ class AuthenticatedClient:
     id: str
     quota: Quota
     is_admin: bool = False
+    allow_precise: bool = True
+
+    @property
+    def allowed_modes(self) -> tuple[ReasoningMode, ...]:
+        return ("fast", "precise") if self.allow_precise else ("fast",)
 
 
 def get_client_repository(session: Annotated[Session, Depends(get_session)]) -> ClientRepository:
@@ -113,6 +118,7 @@ def require_client(
         id=client.id,
         quota=Quota(per_minute=client.per_minute_limit, daily=client.daily_limit),
         is_admin=client.is_admin,
+        allow_precise=client.allow_precise,
     )
 
 

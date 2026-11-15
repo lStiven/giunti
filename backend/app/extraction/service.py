@@ -10,11 +10,11 @@ nothing is found.
 
 import asyncio
 import time
-from collections.abc import Awaitable, Sequence
+from collections.abc import Awaitable, Collection, Sequence
 from dataclasses import dataclass
 
 from app.core.config import ReasoningMode, Settings
-from app.core.errors import AppError, ErrorCode
+from app.core.errors import AppError, ErrorCode, ErrorReason
 from app.documents.models import ExtractedDocument
 from app.documents.registry import extract
 from app.extraction.answer_key import KeyAnswers, KeyFill, fill_from_answer_key
@@ -55,10 +55,18 @@ class QuestionnaireExtractor:
         *,
         model_id: str | None = None,
         mode: ReasoningMode | None = None,
+        allowed_modes: Collection[ReasoningMode] = ("fast", "precise"),
     ) -> ExtractionOutcome:
-        # Fail on an unusable model before spending time reading the document.
+        # Fail on an unusable model or mode before spending time reading the document.
         model = self._runner.resolve_model(model_id)
         effective_mode = self._runner.resolve_mode(model, mode)
+        if effective_mode not in allowed_modes:
+            raise AppError(
+                ErrorCode.FORBIDDEN,
+                f"This API key cannot use the {effective_mode} mode. Use the fast mode.",
+                reason=ErrorReason.MODE_NOT_ALLOWED,
+                details={"mode": effective_mode},
+            )
         # Reading is CPU-bound and blocking (pdfplumber, LibreOffice).
         document = await asyncio.to_thread(extract, data, filename, self._settings)
 

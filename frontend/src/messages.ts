@@ -264,6 +264,11 @@ const REASON_TEXTS: Record<string, ReasonText> = {
     hint: `El documento tiene páginas que son imágenes y el modelo ${modelName(facts)} solo lee texto. Elige un modelo que lea imágenes.`,
     actions: ["changeModel"],
   }),
+  mode_not_allowed: () => ({
+    title: "Tu acceso solo incluye el modo rápido",
+    hint: "Vuelve a intentarlo en modo rápido. Si necesitas el modo preciso, pídeselo a quien te dio el acceso.",
+    actions: ["changeModel"],
+  }),
   per_minute_limit: (facts, wait) => ({
     title: "Demasiadas solicitudes seguidas",
     hint: `Tu clave permite ${detail(facts, "limit")} extracciones por minuto.${wait ? ` Podrás intentarlo de nuevo en ${wait}.` : ""}`,

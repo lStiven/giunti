@@ -179,6 +179,33 @@ def test_fast_mode_on_a_model_without_it_runs_and_reports_precise() -> None:
     assert backend.efforts == [None]
 
 
+def test_fast_only_keys_cannot_use_the_precise_mode() -> None:
+    backend = ScriptedBackend([])
+    _install(backend, (TUNABLE, OTHER))
+    app.dependency_overrides[require_extraction_quota] = lambda: AuthenticatedClient(
+        id="fast-only", quota=Quota(per_minute=100, daily=100), allow_precise=False
+    )
+
+    response = _post(mode="precise")
+
+    assert response.status_code == 403
+    assert response.json()["error"]["reason"] == "mode_not_allowed"
+    assert backend.calls == []
+
+
+def test_fast_only_keys_can_use_the_fast_mode() -> None:
+    backend = ScriptedBackend([_answer(ITEMS)])
+    _install(backend, (TUNABLE, OTHER))
+    app.dependency_overrides[require_extraction_quota] = lambda: AuthenticatedClient(
+        id="fast-only", quota=Quota(per_minute=100, daily=100), allow_precise=False
+    )
+
+    response = _post(mode="fast")
+
+    assert response.status_code == 200
+    assert response.headers["X-LLM-Mode"] == "fast"
+
+
 def test_unknown_mode_is_rejected_before_calling_any_model() -> None:
     backend = ScriptedBackend([])
     _install(backend)

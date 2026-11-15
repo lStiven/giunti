@@ -34,7 +34,7 @@ Cada error que muestra la página incluye un **código de solicitud**. Búscalo 
 | "La clave de acceso no es válida" para un cliente | Se generó una **Nueva invitación** y la anterior dejó de funcionar | Envíale el enlace nuevo |
 | Perdí el enlace del administrador | Solo se muestra una vez | Ejecuta de nuevo el comando que crea el administrador: crea otro. Después elimina el anterior con `python -m app.auth.delete_client <id>` (ver [uso](uso.md#panel-de-administración)) |
 | El enlace de invitación abre una dirección equivocada | `PUBLIC_APP_URL` no corresponde a la dirección real | Corrígelo (en el `.env` de la raíz con Docker Compose, en `backend/.env` en desarrollo), reinicia y genera una **Nueva invitación** |
-| "Alcanzaste el límite de uso" | El cliente llegó a su límite por minuto o diario | Espera, o sube sus límites en el panel (**Editar límites**) |
+| "Alcanzaste el límite de uso" | El cliente llegó a su límite por minuto o diario | Espera, o sube sus límites en el panel (**Editar acceso**) |
 | "No encontramos preguntas" (`NO_ITEMS`) | El documento no parece un cuestionario, o el modelo no lo leyó bien | Prueba con otro modelo |
 | Las respuestas correctas quedan vacías | El documento no marca la respuesta (o la marca de una forma que no se detecta) | Es lo esperado: nunca se inventan respuestas. Revisa las advertencias del resultado |
 | Los Word fallan con "Algo falló en el servidor" (sin Docker ni devcontainer) | LibreOffice no está instalado | Instálalo, o usa Docker Compose o el devcontainer |

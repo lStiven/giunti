@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import App from "./App";
 import { API_KEY, CATALOG, QUESTIONNAIRE, apiError, json, stubApi, untilAborted } from "./test/api";
+import type { ModelCatalog } from "./types/questionnaire";
 
 const PDF = new File(["%PDF-1.4"], "verifica.pdf", { type: "application/pdf" });
 
@@ -65,6 +66,34 @@ describe("App", () => {
 
     expect(await screen.findByText("Gemini 3.8 Flash · Preciso")).toBeDefined();
     expect(sentMode).toBe("precise");
+  });
+
+  it("never offers the precise mode to keys that only have the fast one", async () => {
+    let sentMode: FormDataEntryValue | null = null;
+    const fastOnly: ModelCatalog = {
+      ...CATALOG,
+      providers: CATALOG.providers.map((provider) => ({
+        ...provider,
+        models: provider.models.map((model) => ({ ...model, modes: ["fast"] })),
+      })),
+    };
+    stubApi({
+      models: () => json(fastOnly),
+      extract: (init) => {
+        sentMode = init.body instanceof FormData ? init.body.get("mode") : null;
+        return json(QUESTIONNAIRE, 200, { "X-LLM-Model": "gemini-flash", "X-LLM-Mode": "fast" });
+      },
+    });
+    const user = setup();
+
+    await enterKey(user);
+    await chooseFile(user);
+
+    expect(screen.queryByRole("group", { name: "Modo de lectura" })).toBeNull();
+    expect(screen.queryByRole("radio", { name: /^Preciso/ })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Extraer preguntas" }));
+    expect(await screen.findByText("Gemini 3.8 Flash · Rápido")).toBeDefined();
+    expect(sentMode).toBe("fast");
   });
 
   it("hides the mode choice for models that only read in precise mode", async () => {
