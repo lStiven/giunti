@@ -1,0 +1,194 @@
+{
+  "titulo": "Encuesta de cierre – Taller de lógica para programadores",
+  "idioma": "es",
+  "items": [
+    {
+      "numero": 1,
+      "enunciado": "El taller cumplió mis expectativas.",
+      "tipo": "escala_likert",
+      "alternativas": [
+        {
+          "valor": 1,
+          "texto": "Muy en desacuerdo"
+        },
+        {
+          "valor": 2,
+          "texto": "En desacuerdo"
+        },
+        {
+          "valor": 3,
+          "texto": "Neutral"
+        },
+        {
+          "valor": 4,
+          "texto": "De acuerdo"
+        },
+        {
+          "valor": 5,
+          "texto": "Muy de acuerdo"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": null
+    },
+    {
+      "numero": 2,
+      "enunciado": "Los ejercicios tenían la dificultad adecuada.",
+      "tipo": "escala_likert",
+      "alternativas": [
+        {
+          "valor": 1,
+          "texto": "Muy en desacuerdo"
+        },
+        {
+          "valor": 2,
+          "texto": "En desacuerdo"
+        },
+        {
+          "valor": 3,
+          "texto": "Neutral"
+        },
+        {
+          "valor": 4,
+          "texto": "De acuerdo"
+        },
+        {
+          "valor": 5,
+          "texto": "Muy de acuerdo"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": null
+    },
+    {
+      "numero": 3,
+      "enunciado": "Recomendaría el taller a otras personas.",
+      "tipo": "escala_likert",
+      "alternativas": [
+        {
+          "valor": 1,
+          "texto": "Muy en desacuerdo"
+        },
+        {
+          "valor": 2,
+          "texto": "En desacuerdo"
+        },
+        {
+          "valor": 3,
+          "texto": "Neutral"
+        },
+        {
+          "valor": 4,
+          "texto": "De acuerdo"
+        },
+        {
+          "valor": 5,
+          "texto": "Muy de acuerdo"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": null
+    },
+    {
+      "numero": 4,
+      "enunciado": "¿Cuál es el número que completa la serie 5, 10, 20, 40, …?",
+      "tipo": "seleccion_multiple",
+      "alternativas": [
+        {
+          "valor": "A",
+          "texto": "60"
+        },
+        {
+          "valor": "B",
+          "texto": "80"
+        },
+        {
+          "valor": "C",
+          "texto": "50"
+        },
+        {
+          "valor": "D",
+          "texto": "70"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": [
+        "B"
+      ]
+    },
+    {
+      "numero": 5,
+      "enunciado": "Si un artículo de 50 EUR sube un 10 %, ¿cuál es su nuevo precio?",
+      "tipo": "seleccion_multiple",
+      "alternativas": [
+        {
+          "valor": "A",
+          "texto": "55 EUR"
+        },
+        {
+          "valor": "B",
+          "texto": "60 EUR"
+        },
+        {
+          "valor": "C",
+          "texto": "51 EUR"
+        },
+        {
+          "valor": "D",
+          "texto": "45 EUR"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": [
+        "A"
+      ]
+    },
+    {
+      "numero": 6,
+      "enunciado": "El 20 % de 50 es 10.",
+      "tipo": "verdadero_falso",
+      "alternativas": [
+        {
+          "valor": "V",
+          "texto": "Verdadero"
+        },
+        {
+          "valor": "F",
+          "texto": "Falso"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": [
+        "V"
+      ]
+    },
+    {
+      "numero": 7,
+      "enunciado": "Un cubo tiene 8 caras.",
+      "tipo": "verdadero_falso",
+      "alternativas": [
+        {
+          "valor": "V",
+          "texto": "Verdadero"
+        },
+        {
+          "valor": "F",
+          "texto": "Falso"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": [
+        "F"
+      ]
+    },
+    {
+      "numero": 8,
+      "enunciado": "¿Qué tema le gustaría reforzar en un próximo taller?",
+      "tipo": "desarrollo",
+      "alternativas": [],
+      "premisas": [],
+      "respuesta_correcta": null
+    }
+  ],
+  "total_items": 8
+}

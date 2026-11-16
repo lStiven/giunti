@@ -121,6 +121,12 @@ deploy-backend: _deploy-ready
     "{{ gcloud }}" run deploy "{{ backend_service }}" --image "$image" --region "{{ gcp_region }}" --project "{{ gcp_project }}" --quiet
     url="https://{{ backend_service }}-$("{{ gcloud }}" projects describe "{{ gcp_project }}" --format 'value(projectNumber)').{{ gcp_region }}.run.app"
     echo "==> Health: $(curl -fsS "$url/health")"
+    echo "==> Keeping only the deployed image (older ones cost storage and are not used)"
+    "{{ gcloud }}" artifacts docker images list "{{ backend_image }}" --include-tags --project "{{ gcp_project }}" --format 'value(version,tags)' \
+      | while read -r digest tags; do
+          case ",$tags," in *",${image##*:},"*) continue ;; esac
+          "{{ gcloud }}" artifacts docker images delete "{{ backend_image }}@$digest" --delete-tags --quiet --project "{{ gcp_project }}"
+        done
 
 # Build the frontend against the deployed backend and publish it on Firebase Hosting
 [group('deploy')]

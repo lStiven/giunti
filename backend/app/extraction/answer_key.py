@@ -33,6 +33,7 @@ MAX_ITEM_PAGES = 30
 MAX_LISTED_NUMBERS = 20
 STATEMENT_PREVIEW_CHARS = 160
 MIN_KEY_TABLE_ROWS = 3
+MAX_KEY_HEADING_WORDS = 6
 
 ANSWERABLE_TYPES = frozenset({ItemType.MULTIPLE_CHOICE, ItemType.TRUE_FALSE, ItemType.MATCHING})
 
@@ -43,6 +44,9 @@ _KEY_HEADING = re.compile(
     r"|answer key|correct answers?|solutions?|respuestas? correctas?|clave de respuestas"
     r"|solucionario|hoja de respuestas|gabarito|corrig[eé]s?|l[oö]sungen)\b"
 )
+# "3 pts. por la respuesta correcta", "1 punto per risposta corretta": scores, not keys.
+_SCORE_WORDS = frozenset({"por", "per", "for", "pour"})
+_WORD = re.compile(r"\w+")
 _NUMBERED_TABLE_ROW = re.compile(r"(?m)^\|\s*\d{1,3}\s*\|")
 
 INSTRUCTIONS = """\
@@ -118,9 +122,7 @@ def answer_key_pages(document: ExtractedDocument) -> tuple[int, ...]:
     found: list[int] = []
     previous_is_key = False
     for page in document.pages:
-        is_key = bool(_KEY_HEADING.search(normalize(page.text))) or (
-            previous_is_key and _continues_key_table(page)
-        )
+        is_key = _has_key_heading(page.text) or (previous_is_key and _continues_key_table(page))
         if is_key:
             found.append(page.number)
         previous_is_key = is_key
@@ -282,6 +284,28 @@ def _item_summary(item: ExtractedItem) -> dict[str, object]:
     if item.premises:
         summary["premisas"] = [str(option.value) for option in item.premises]
     return summary
+
+
+def _has_key_heading(text: str) -> bool:
+    """Whether a line or table cell is an answer-key heading.
+
+    The key phrases also appear inside sentences ("marque A, B o C en su hoja de respuestas",
+    "3 pts. por la respuesta correcta"), which do not make the page a key.
+    """
+    return any(
+        _is_key_heading(normalize(cell)) for line in text.splitlines() for cell in line.split("|")
+    )
+
+
+def _is_key_heading(segment: str) -> bool:
+    for match in _KEY_HEADING.finditer(segment):
+        before = _WORD.findall(segment[: match.start()])
+        if not before:
+            return True
+        is_short = len(_WORD.findall(segment)) <= MAX_KEY_HEADING_WORDS
+        if is_short and not _SCORE_WORDS.intersection(before):
+            return True
+    return False
 
 
 def _continues_key_table(page: DocumentPage) -> bool:

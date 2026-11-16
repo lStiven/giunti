@@ -1,0 +1,204 @@
+{
+  "titulo": "Prueba de Lógica y Matemática",
+  "idioma": "es",
+  "items": [
+    {
+      "numero": 1,
+      "enunciado": "¿Cuál es el número que sigue en la serie 3, 6, 12, 24, …?",
+      "tipo": "seleccion_multiple",
+      "alternativas": [
+        {
+          "valor": "A",
+          "texto": "30"
+        },
+        {
+          "valor": "B",
+          "texto": "36"
+        },
+        {
+          "valor": "C",
+          "texto": "48"
+        },
+        {
+          "valor": "D",
+          "texto": "42"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": [
+        "C"
+      ]
+    },
+    {
+      "numero": 2,
+      "enunciado": "Una camisa cuesta 40 EUR y tiene un descuento del 25 %. ¿Cuál es el precio final?",
+      "tipo": "seleccion_multiple",
+      "alternativas": [
+        {
+          "valor": "A",
+          "texto": "10 EUR"
+        },
+        {
+          "valor": "B",
+          "texto": "30 EUR"
+        },
+        {
+          "valor": "C",
+          "texto": "35 EUR"
+        },
+        {
+          "valor": "D",
+          "texto": "15 EUR"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": [
+        "B"
+      ]
+    },
+    {
+      "numero": 3,
+      "enunciado": "Si 3 cuadernos cuestan 4,50 EUR, ¿cuánto cuestan 7 cuadernos?",
+      "tipo": "seleccion_multiple",
+      "alternativas": [
+        {
+          "valor": "A",
+          "texto": "9,00 EUR"
+        },
+        {
+          "valor": "B",
+          "texto": "10,50 EUR"
+        },
+        {
+          "valor": "C",
+          "texto": "12,00 EUR"
+        },
+        {
+          "valor": "D",
+          "texto": "10,00 EUR"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": [
+        "B"
+      ]
+    },
+    {
+      "numero": 4,
+      "enunciado": "¿Cuáles de los siguientes números son primos? Marque todas las correctas.",
+      "tipo": "seleccion_multiple",
+      "alternativas": [
+        {
+          "valor": "A",
+          "texto": "9"
+        },
+        {
+          "valor": "B",
+          "texto": "11"
+        },
+        {
+          "valor": "C",
+          "texto": "15"
+        },
+        {
+          "valor": "D",
+          "texto": "13"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": [
+        "B",
+        "D"
+      ]
+    },
+    {
+      "numero": 5,
+      "enunciado": "Si todos los gatos son mamíferos y Tom es un gato, entonces Tom es un mamífero.",
+      "tipo": "verdadero_falso",
+      "alternativas": [
+        {
+          "valor": "V",
+          "texto": "Verdadero"
+        },
+        {
+          "valor": "F",
+          "texto": "Falso"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": [
+        "V"
+      ]
+    },
+    {
+      "numero": 6,
+      "enunciado": "El 50 % de 80 es mayor que el 80 % de 50.",
+      "tipo": "verdadero_falso",
+      "alternativas": [
+        {
+          "valor": "V",
+          "texto": "Verdadero"
+        },
+        {
+          "valor": "F",
+          "texto": "Falso"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": [
+        "F"
+      ]
+    },
+    {
+      "numero": 7,
+      "enunciado": "Relacione cada operación con su resultado.",
+      "tipo": "emparejamiento",
+      "alternativas": [
+        {
+          "valor": "a",
+          "texto": "75"
+        },
+        {
+          "valor": "b",
+          "texto": "30"
+        },
+        {
+          "valor": "c",
+          "texto": "12"
+        },
+        {
+          "valor": "d",
+          "texto": "25"
+        }
+      ],
+      "premisas": [
+        {
+          "valor": "1",
+          "texto": "15 % de 200"
+        },
+        {
+          "valor": "2",
+          "texto": "3/4 de 100"
+        },
+        {
+          "valor": "3",
+          "texto": "Raíz cuadrada de 144"
+        }
+      ],
+      "respuesta_correcta": [
+        "1-b",
+        "2-a",
+        "3-c"
+      ]
+    },
+    {
+      "numero": 8,
+      "enunciado": "Explique con sus palabras cómo resolvió la pregunta 2.",
+      "tipo": "desarrollo",
+      "alternativas": [],
+      "premisas": [],
+      "respuesta_correcta": null
+    }
+  ],
+  "total_items": 8
+}

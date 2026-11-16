@@ -1,0 +1,100 @@
+{
+  "titulo": "Modelo del Examen de Lógica Matemática",
+  "idioma": "es",
+  "items": [
+    {
+      "numero": 1,
+      "enunciado": "¿Cuál de las siguientes afirmaciones se puede derivar del texto anterior?\nSeleccione una alternativa.",
+      "tipo": "seleccion_multiple",
+      "alternativas": [
+        {
+          "valor": "A",
+          "texto": "Los receptores sensoriales captan los estímulos del ambiente y lo transforman en un impulso nervioso."
+        },
+        {
+          "valor": "B",
+          "texto": "Es la corteza cerebral la que realmente capta la procedencia del estímulo y envía un mensaje al sistema nervioso."
+        },
+        {
+          "valor": "C",
+          "texto": "Las condiciones ambientales que rodean a una persona pueden transmitir mensajes dispares según el receptor que actúa en un momento concreto."
+        },
+        {
+          "valor": "D",
+          "texto": "Los receptores sensoriales son neuronas que captan información interna como sonidos y externa como sentir acidez."
+        },
+        {
+          "valor": "E",
+          "texto": "Las personas que tienen una mayor sensibilidad o capacidad para captar sensaciones probablemente tendrán más receptores sensoriales."
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": [
+        "A"
+      ]
+    },
+    {
+      "numero": 2,
+      "enunciado": "¿Cuál es el número que completa la serie?\n17 – 34 – 51 – 68 - ?",
+      "tipo": "desarrollo",
+      "alternativas": [],
+      "premisas": [],
+      "respuesta_correcta": null
+    },
+    {
+      "numero": 3,
+      "enunciado": "¿Cuál es el dibujo que completa la serie? Seleccione una alternativa.",
+      "tipo": "seleccion_multiple",
+      "alternativas": [
+        {
+          "valor": "A",
+          "texto": null
+        },
+        {
+          "valor": "B",
+          "texto": null
+        },
+        {
+          "valor": "C",
+          "texto": null
+        },
+        {
+          "valor": "D",
+          "texto": null
+        },
+        {
+          "valor": "E",
+          "texto": null
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": [
+        "B"
+      ]
+    },
+    {
+      "numero": 4,
+      "enunciado": "¿Qué figura desplegada corresponde al cubo? Seleccione una alternativa.",
+      "tipo": "seleccion_multiple",
+      "alternativas": [
+        {
+          "valor": "I",
+          "texto": null
+        },
+        {
+          "valor": "II",
+          "texto": null
+        },
+        {
+          "valor": "III",
+          "texto": null
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": [
+        "II"
+      ]
+    }
+  ],
+  "total_items": 4
+}

@@ -1,0 +1,257 @@
+{
+  "titulo": "Cuestionario de Salud del Paciente [Patient Health Questionnaire (PHQ-9)]",
+  "idioma": "es",
+  "items": [
+    {
+      "numero": 1,
+      "enunciado": "Poco interés o placer en hacer cosas",
+      "tipo": "escala_likert",
+      "alternativas": [
+        {
+          "valor": 0,
+          "texto": "Para nada"
+        },
+        {
+          "valor": 1,
+          "texto": "Varios días"
+        },
+        {
+          "valor": 2,
+          "texto": "Más de la mitad de los días"
+        },
+        {
+          "valor": 3,
+          "texto": "Casi todos los días"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": null
+    },
+    {
+      "numero": 2,
+      "enunciado": "Se ha sentido decaído(a), deprimido(a) o sin esperanzas",
+      "tipo": "escala_likert",
+      "alternativas": [
+        {
+          "valor": 0,
+          "texto": "Para nada"
+        },
+        {
+          "valor": 1,
+          "texto": "Varios días"
+        },
+        {
+          "valor": 2,
+          "texto": "Más de la mitad de los días"
+        },
+        {
+          "valor": 3,
+          "texto": "Casi todos los días"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": null
+    },
+    {
+      "numero": 3,
+      "enunciado": "Ha tenido dificultad para quedarse o permanecer dormido(a), o ha dormido mucho",
+      "tipo": "escala_likert",
+      "alternativas": [
+        {
+          "valor": 0,
+          "texto": "Para nada"
+        },
+        {
+          "valor": 1,
+          "texto": "Varios días"
+        },
+        {
+          "valor": 2,
+          "texto": "Más de la mitad de los días"
+        },
+        {
+          "valor": 3,
+          "texto": "Casi todos los días"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": null
+    },
+    {
+      "numero": 4,
+      "enunciado": "Se ha sentido cansado(a) o con poca energía",
+      "tipo": "escala_likert",
+      "alternativas": [
+        {
+          "valor": 0,
+          "texto": "Para nada"
+        },
+        {
+          "valor": 1,
+          "texto": "Varios días"
+        },
+        {
+          "valor": 2,
+          "texto": "Más de la mitad de los días"
+        },
+        {
+          "valor": 3,
+          "texto": "Casi todos los días"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": null
+    },
+    {
+      "numero": 5,
+      "enunciado": "Sin apetito o ha comido en exceso",
+      "tipo": "escala_likert",
+      "alternativas": [
+        {
+          "valor": 0,
+          "texto": "Para nada"
+        },
+        {
+          "valor": 1,
+          "texto": "Varios días"
+        },
+        {
+          "valor": 2,
+          "texto": "Más de la mitad de los días"
+        },
+        {
+          "valor": 3,
+          "texto": "Casi todos los días"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": null
+    },
+    {
+      "numero": 6,
+      "enunciado": "Se ha sentido mal con usted mismo(a) o que es un fracaso o que ha quedado mal con usted mismo(a) o con su familia",
+      "tipo": "escala_likert",
+      "alternativas": [
+        {
+          "valor": 0,
+          "texto": "Para nada"
+        },
+        {
+          "valor": 1,
+          "texto": "Varios días"
+        },
+        {
+          "valor": 2,
+          "texto": "Más de la mitad de los días"
+        },
+        {
+          "valor": 3,
+          "texto": "Casi todos los días"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": null
+    },
+    {
+      "numero": 7,
+      "enunciado": "Ha tenido dificultad para concentrarse en ciertas actividades, por ejemplo para leer el diario o ver la televisión",
+      "tipo": "escala_likert",
+      "alternativas": [
+        {
+          "valor": 0,
+          "texto": "Para nada"
+        },
+        {
+          "valor": 1,
+          "texto": "Varios días"
+        },
+        {
+          "valor": 2,
+          "texto": "Más de la mitad de los días"
+        },
+        {
+          "valor": 3,
+          "texto": "Casi todos los días"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": null
+    },
+    {
+      "numero": 8,
+      "enunciado": "Se ha movido o hablado tan lentamente que otros pueden notarlo? O, por el contrario, estar tan nervioso o inquieto que te mueves mucho más de lo habitual/normal",
+      "tipo": "escala_likert",
+      "alternativas": [
+        {
+          "valor": 0,
+          "texto": "Para nada"
+        },
+        {
+          "valor": 1,
+          "texto": "Varios días"
+        },
+        {
+          "valor": 2,
+          "texto": "Más de la mitad de los días"
+        },
+        {
+          "valor": 3,
+          "texto": "Casi todos los días"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": null
+    },
+    {
+      "numero": 9,
+      "enunciado": "Pensamientos de que estarías mejor muerto(a) o de lastimarse de alguna manera",
+      "tipo": "escala_likert",
+      "alternativas": [
+        {
+          "valor": 0,
+          "texto": "Para nada"
+        },
+        {
+          "valor": 1,
+          "texto": "Varios días"
+        },
+        {
+          "valor": 2,
+          "texto": "Más de la mitad de los días"
+        },
+        {
+          "valor": 3,
+          "texto": "Casi todos los días"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": null
+    },
+    {
+      "numero": 10,
+      "enunciado": "Si marcaste algunos problemas, ¿qué tan difícil te hicieron esos problemas hacer tu trabajo, encargarte de las cosas de la casa o relacionarte con otras personas?",
+      "tipo": "seleccion_multiple",
+      "alternativas": [
+        {
+          "valor": "A",
+          "texto": "Nada difícil"
+        },
+        {
+          "valor": "B",
+          "texto": "Algo difícil"
+        },
+        {
+          "valor": "C",
+          "texto": "Muy difícil"
+        },
+        {
+          "valor": "D",
+          "texto": "Sumamente difícil"
+        }
+      ],
+      "premisas": [],
+      "respuesta_correcta": null
+    }
+  ],
+  "total_items": 10
+}

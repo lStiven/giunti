@@ -1,0 +1,12 @@
+{
+  "archivo": "ejemplo_examen.pdf",
+  "http": 200,
+  "segundos_totales": 13.0,
+  "modelo": "gemini-flash",
+  "modo": "fast",
+  "partes": "1",
+  "reparaciones": "0",
+  "tokens_entrada": "9149",
+  "tokens_salida": "849",
+  "advertencias": []
+}

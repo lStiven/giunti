@@ -1,0 +1,12 @@
+{
+  "archivo": "Depression-Care-and-PHQ9-Spanish.pdf",
+  "http": 200,
+  "segundos_totales": 17.0,
+  "modelo": "gemini-flash",
+  "modo": "fast",
+  "partes": "1",
+  "reparaciones": "0",
+  "tokens_entrada": "4443",
+  "tokens_salida": "1711",
+  "advertencias": []
+}

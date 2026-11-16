@@ -37,6 +37,8 @@ El servicio está publicado en Google Cloud:
 | **Documentación de la API** | https://giunti-backend-747240323866.us-central1.run.app/docs | Explorar y probar los endpoints desde el navegador |
 | **Estado del servicio** | https://giunti-backend-747240323866.us-central1.run.app/health | Responde `{"status":"ok"}` si el backend está arriba |
 
+Sin acceso, puedes ver en [examples/](examples/README.md) cuestionarios de ejemplo en PDF, Word y Excel junto con el JSON que devolvió el servicio.
+
 **Para probarlo necesitas un enlace de invitación.** El acceso no es público: pídele uno al equipo. Con el enlace entras sin escribir ninguna clave. Si vas a integrarte por API, pide también la clave que aparece al crear la invitación.
 
 - **Primera petición lenta:** el backend se apaga cuando nadie lo usa, así que la primera petición después de un rato tarda unos segundos más en responder.
@@ -168,6 +170,7 @@ giunti/
 ├── backend/              API en FastAPI: lectura de documentos, modelos, accesos (Python 3.13, uv)
 ├── frontend/             Página de los clientes y panel de administración (React + Vite + TypeScript)
 ├── eval/                 Cuestionarios sintéticos y medición de la calidad de la extracción
+├── examples/             Cuestionarios de ejemplo (PDF, Word, Excel) y el JSON que devolvió la API
 ├── guia/                 Guías de instalación, despliegue, uso y funcionamiento
 ├── scripts/              Herramientas del repositorio (dependencias deprecadas)
 ├── .devcontainer/        Entorno de desarrollo, con las mismas versiones que producción

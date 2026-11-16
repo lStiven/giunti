@@ -1,0 +1,12 @@
+{
+  "archivo": "encuesta-taller.xlsx",
+  "http": 200,
+  "segundos_totales": 8.1,
+  "modelo": "gemini-flash",
+  "modo": "fast",
+  "partes": "1",
+  "reparaciones": "0",
+  "tokens_entrada": "1836",
+  "tokens_salida": "1195",
+  "advertencias": []
+}

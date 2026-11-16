@@ -28,7 +28,7 @@ flowchart LR
 |---|---|---|
 | **Página web** | Firebase Hosting, sitio `giunti-514722` → https://giunti-514722.web.app | Los archivos estáticos del frontend (página de los clientes y `/admin`) |
 | **API** | Cloud Run, servicio `giunti-backend` en `us-central1` → https://giunti-backend-747240323866.us-central1.run.app | El backend: 2 vCPU, 2 GB, hasta 15 minutos por petición, de 0 a 1 instancia |
-| **Imágenes del backend** | Artifact Registry, repositorio `giunti` | Una imagen por commit desplegado (`backend:<commit>`) |
+| **Imagen del backend** | Artifact Registry, repositorio `giunti` | Solo la imagen desplegada (`backend:<commit>`); las anteriores se borran al desplegar |
 | **Secretos** | Secret Manager | `gemini-api-key`, `llm-api-keys`, `api-key-pepper` y `database-url`. Solo los lee la cuenta de servicio `giunti-backend` |
 | **Base de datos** | [Neon](https://console.neon.tech), proyecto `floral-wave-85394410` | Clientes, hashes de sus claves y uso diario. Los documentos nunca se guardan |
 
@@ -91,6 +91,7 @@ just deploy               # backend y frontend, desde el commit actual
 ==> Building us-central1-docker.pkg.dev/giunti-514722/giunti/backend:3f2a9c1 in Cloud Build
 ==> Rolling out on Cloud Run (giunti-backend)
 ==> Health: {"status":"ok"}
+==> Keeping only the deployed image (older ones cost storage and are not used)
 ==> Building the frontend for https://giunti-backend-747240323866.us-central1.run.app
 ==> Publishing on Firebase Hosting (giunti-514722)
 4 files (3 new) published on https://giunti-514722.web.app
@@ -147,15 +148,7 @@ git push
 just deploy
 ```
 
-**Si es urgente**, puedes devolver el backend a una revisión anterior en segundos, sin construir nada:
-
-```bash
-gcloud run revisions list --service giunti-backend --region us-central1      # revisiones y su imagen
-gcloud run services update-traffic giunti-backend --region us-central1 \
-  --to-revisions giunti-backend-00002-29m=100                                  # vuelve a esa revisión
-```
-
-> **Importante:** mientras el tráfico esté fijado a una revisión, los despliegues nuevos **no reciben tráfico**. Cuando la versión corregida esté desplegada, vuelve a la normalidad con `gcloud run services update-traffic giunti-backend --region us-central1 --to-latest`.
+Es la única forma para el backend: para no pagar almacenamiento, `just deploy-backend` **conserva solo la imagen desplegada** y borra las anteriores. Las revisiones viejas de Cloud Run siguen en la lista, pero ya no tienen imagen y no pueden volver a recibir tráfico. Volver atrás tarda lo mismo que un despliegue, unos 4 minutos.
 
 **Para la página:** en la [consola de Firebase](https://console.firebase.google.com/project/giunti-514722/hosting/sites) → *Hosting* → historial de versiones, elige la anterior y pulsa *Revertir*.
 
@@ -234,7 +227,7 @@ printf 'DATABASE_URL=%s\n' "$(gcloud secrets versions access latest --secret dat
 | Cloud Run | Gratis dentro de la cuota mensual (≈300 extracciones de 5 minutos). El máximo de 1 instancia acota el gasto |
 | Cloud Build | Gratis hasta 2.500 minutos de construcción al mes; cada despliegue usa ≈2 |
 | Firebase Hosting, Secret Manager, Neon | Gratis en el uso actual |
-| Artifact Registry | ≈US$0,10 al mes por las imágenes. Se pueden borrar las viejas desde la consola |
+| Artifact Registry | Gratis: se guarda una sola imagen (≈490 MB), dentro de los 0,5 GB incluidos |
 | Gemini y demás modelos | Por uso, aparte, en la cuenta de cada proveedor |
 
 ## Montarlo desde cero

@@ -1,0 +1,216 @@
+{
+  "id": "es_ejemplo_excel_taller",
+  "description": "Example for /examples (Excel): a 1-5 Likert matrix with a merged header, multiple choice with the answer in bold or with a fill, true/false answered only in a hidden answer-key sheet, and an open question.",
+  "formats": [
+    "xlsx"
+  ],
+  "titulo": "Encuesta de cierre – Taller de lógica para programadores",
+  "idioma": "es",
+  "instructions": [
+    "Responda la encuesta y las preguntas de comprobación."
+  ],
+  "sections": [
+    {
+      "heading": "Parte 1 – Satisfacción",
+      "items": [
+        {
+          "numero": 1,
+          "enunciado": "El taller cumplió mis expectativas.",
+          "tipo": "escala_likert",
+          "alternativas": [
+            {
+              "valor": 1,
+              "texto": "Muy en desacuerdo"
+            },
+            {
+              "valor": 2,
+              "texto": "En desacuerdo"
+            },
+            {
+              "valor": 3,
+              "texto": "Neutral"
+            },
+            {
+              "valor": 4,
+              "texto": "De acuerdo"
+            },
+            {
+              "valor": 5,
+              "texto": "Muy de acuerdo"
+            }
+          ]
+        },
+        {
+          "numero": 2,
+          "enunciado": "Los ejercicios tenían la dificultad adecuada.",
+          "tipo": "escala_likert",
+          "alternativas": [
+            {
+              "valor": 1,
+              "texto": "Muy en desacuerdo"
+            },
+            {
+              "valor": 2,
+              "texto": "En desacuerdo"
+            },
+            {
+              "valor": 3,
+              "texto": "Neutral"
+            },
+            {
+              "valor": 4,
+              "texto": "De acuerdo"
+            },
+            {
+              "valor": 5,
+              "texto": "Muy de acuerdo"
+            }
+          ]
+        },
+        {
+          "numero": 3,
+          "enunciado": "Recomendaría el taller a otras personas.",
+          "tipo": "escala_likert",
+          "alternativas": [
+            {
+              "valor": 1,
+              "texto": "Muy en desacuerdo"
+            },
+            {
+              "valor": 2,
+              "texto": "En desacuerdo"
+            },
+            {
+              "valor": 3,
+              "texto": "Neutral"
+            },
+            {
+              "valor": 4,
+              "texto": "De acuerdo"
+            },
+            {
+              "valor": 5,
+              "texto": "Muy de acuerdo"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Parte 2 – Comprobación de conocimientos",
+      "items": [
+        {
+          "numero": 4,
+          "enunciado": "¿Cuál es el número que completa la serie 5, 10, 20, 40, …?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "60"
+            },
+            {
+              "valor": "B",
+              "texto": "80"
+            },
+            {
+              "valor": "C",
+              "texto": "50"
+            },
+            {
+              "valor": "D",
+              "texto": "70"
+            }
+          ],
+          "respuesta_correcta": [
+            "B"
+          ],
+          "mark": "bold"
+        },
+        {
+          "numero": 5,
+          "enunciado": "Si un artículo de 50 EUR sube un 10 %, ¿cuál es su nuevo precio?",
+          "tipo": "seleccion_multiple",
+          "alternativas": [
+            {
+              "valor": "A",
+              "texto": "55 EUR"
+            },
+            {
+              "valor": "B",
+              "texto": "60 EUR"
+            },
+            {
+              "valor": "C",
+              "texto": "51 EUR"
+            },
+            {
+              "valor": "D",
+              "texto": "45 EUR"
+            }
+          ],
+          "respuesta_correcta": [
+            "A"
+          ],
+          "mark": "highlight"
+        },
+        {
+          "numero": 6,
+          "enunciado": "El 20 % de 50 es 10.",
+          "tipo": "verdadero_falso",
+          "alternativas": [
+            {
+              "valor": "V",
+              "texto": "Verdadero"
+            },
+            {
+              "valor": "F",
+              "texto": "Falso"
+            }
+          ],
+          "respuesta_correcta": [
+            "V"
+          ],
+          "mark": "key"
+        },
+        {
+          "numero": 7,
+          "enunciado": "Un cubo tiene 8 caras.",
+          "tipo": "verdadero_falso",
+          "alternativas": [
+            {
+              "valor": "V",
+              "texto": "Verdadero"
+            },
+            {
+              "valor": "F",
+              "texto": "Falso"
+            }
+          ],
+          "respuesta_correcta": [
+            "F"
+          ],
+          "mark": "key"
+        }
+      ]
+    },
+    {
+      "heading": "Parte 3 – Comentarios",
+      "items": [
+        {
+          "numero": 8,
+          "enunciado": "¿Qué tema le gustaría reforzar en un próximo taller?",
+          "tipo": "desarrollo"
+        }
+      ]
+    }
+  ],
+  "answer_key": {
+    "heading": "Respuestas",
+    "style": "table",
+    "new_page": true,
+    "columns": [
+      "Pregunta",
+      "Respuesta"
+    ]
+  }
+}

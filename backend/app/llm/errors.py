@@ -1,14 +1,15 @@
 """Classification of model call failures.
 
-Each kind decides what the engine does next:
+Each kind decides what the engine does next. There is no fallback: when the chosen model
+cannot finish, the request fails with the reason, so the client can retry or pick another model.
 
-- TRANSIENT (per-minute 429, 5xx, timeout, connection): retry with backoff, then next model.
+- TRANSIENT (per-minute 429, 5xx, timeout, connection): retry with backoff, then fail.
 - QUOTA_EXHAUSTED (daily quota, billing): no retry; the model is paused until it resets.
 - CONFIGURATION (invalid key, unknown model, rejected request): no retry; logged as an error.
-- REFUSED (safety block, empty answer): next model.
-- TRUNCATED (output limit reached): next model.
-- CONTEXT_EXCEEDED (input too long for the model): next model.
-- INVALID_OUTPUT (JSON or rules still invalid after the repair attempts): next model.
+- REFUSED (safety block, empty answer): fail.
+- TRUNCATED (output limit reached): fail; the extraction splits the part in two and retries.
+- CONTEXT_EXCEEDED (input too long for the model): fail.
+- INVALID_OUTPUT (JSON or rules still invalid after the repair attempts): fail.
 """
 
 import re

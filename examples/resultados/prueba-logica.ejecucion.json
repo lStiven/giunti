@@ -1,0 +1,12 @@
+{
+  "archivo": "prueba-logica.docx",
+  "http": 200,
+  "segundos_totales": 61.9,
+  "modelo": "gemini-flash",
+  "modo": "fast",
+  "partes": "1",
+  "reparaciones": "0",
+  "tokens_entrada": "5094",
+  "tokens_salida": "1339",
+  "advertencias": []
+}

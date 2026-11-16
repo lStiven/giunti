@@ -1,7 +1,7 @@
 [project]
 name = "giunti-backend"
 version = "0.1.0"
-description = "API that extracts questionnaire items from PDF, DOCX and XLSX files into structured JSON using LLMs with fallback."
+description = "API that extracts questionnaire items from PDF, DOCX and XLSX files into structured JSON using LLMs; the client chooses the model and the reasoning mode."
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [

@@ -2,6 +2,8 @@ import json
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 
+import pytest
+
 from app.core.config import LLMCatalog, LLMModelConfig, ProviderInfo, Settings
 from app.documents.models import DocumentFormat, DocumentPage, ExtractedDocument, PageSource
 from app.extraction.answer_key import (
@@ -109,6 +111,37 @@ def test_key_pages_include_singular_headers_written_with_formatting_marks() -> N
     )
 
     assert answer_key_pages(document) == (2, 3)
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "(3 pts. por la respuesta correcta = 3 pts.)",
+        "5. Por cada respuesta correcta obtendrá el puntaje indicado a la derecha.",
+        "1 punto per risposta corretta",
+        "En las preguntas 1 - 5, marque la letra correcta A - G en su hoja de respuestas.",
+        "Choose the correct answer for each question. Mark only one option.",
+    ],
+)
+def test_key_phrases_inside_sentences_are_not_key_pages(sentence: str) -> None:
+    document = _document(f"1. Domanda\n{sentence}", "Fine")
+
+    assert answer_key_pages(document) == ()
+
+
+@pytest.mark.parametrize(
+    "heading",
+    [
+        "**Soluzioni**: 1-B, 2-C, 3-A, 4-D, 5-B, 6-C, 7-A, 8-B, 9-D, 10-A",
+        "Tabla de respuestas correctas - Examen 1",
+        "| **Respuesta correcta:** <u>C</u> | **Eje de Habilidad:** Geometría |",
+        "## Sheet: Answer key (hidden)",
+    ],
+)
+def test_key_headings_are_key_pages(heading: str) -> None:
+    document = _document("1. Domanda", heading)
+
+    assert answer_key_pages(document) == (2,)
 
 
 def test_a_numbered_table_right_after_a_key_page_continues_the_key() -> None:
